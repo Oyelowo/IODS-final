@@ -52,6 +52,9 @@ data_mca <- alco_data
 #now, filter them out for the MCA
 data_mca_fac1<-Filter(is.factor, data_mca)
 
+high_use<-factor(alco_data[,"high_use"])
+data_mca_fac1 <- cbind.data.frame(data_mca_fac1, high_use)
+
 #par(mfrow=c(1,2))
 #now, perform the MCA on the catergorial/qualitative variables
 mca_alco1 <- MCA(data_mca_fac1, graph = T)
@@ -86,7 +89,19 @@ ggplot(data = mca_obs_df, aes(x = Dim.1, y = Dim.2)) +
   ggtitle("MCA plot of variables using R package FactoMineR") +
   scale_colour_discrete(name = "Variable")
 
-
+#Here, we can see that female students generally attend school
+#because of her reputation and get more school support.
+#They also have family support and are able to attend paid extra
+#classes. Most of their father's job are in the health sector.
+#High alcohol consumption is more rampant amongst female students
+#compared to their male counterparts with high alcohol use.
+#male students also attend the school based on course preference
+#and other reasons. By and large, they do not attend paid extra classes
+#compared to the female students and also do not get family and
+#school support like the frmale students.
+#LAstly, they mosly have no intention of pursuing higher education.
+#This is explored further by categorising more continuous variables
+#such as grades, absences, to allow for comparison with other variables.
 
 
 
@@ -179,6 +194,36 @@ ggplot(data = mca_obs_df2, aes(x = Dim.1, y = Dim.2)) +
 
 
 #Here, we can see the categorisation and association
+#In the NW quadrant, it shows that those that pay for for extra
+#classes in portugese and math, have family support and are mostly
+#female students. They also get extra education support and have
+#ambition for higher education.
+
+#In the NE quadrant, high alcohol use seem to be associated with
+#guardian other than mother or father. Those with high 
+#alcohol use also seem to not have ambition for higher education.
+#They also perform poorly in studies(low grade). and mostly choose
+#school because it is closer to home amongst other reasons, other
+#than reputation and course preference. They also do not seem to 
+#participate in extracurricular activities and are mostly 
+#in romantic relationship. They also high absences.
+
+
+#In the SW quadrant, it can be seen that those that have low absence
+#perform very well in studies do not take excessive alcohol. They
+#are also engaged in extracurricular activities and have their mother
+#as their guardian. They also motivated to attend the school 
+#because of shool's reputation.
+
+#In the SE quadrant, Male students seem to be more moderately absent and
+#do not attend paid extra classes in portuguese and math.
+#attend the school because of the course preference. They generally also have 
+#no internet access. They also mostly do not get school's support.
+#It also looks like their father are their guardian.
+
+
+#This will be further explored with family of regression models
+#(GLM, GAM, GBM)
 
 
 
@@ -849,3 +894,15 @@ plot.gbm(halc_gbm1, "studytime", best.iter1)
 #and overall, male students seem to have relatively more high alcohol use than
 #their female counterpart. Also, as shown earlier, more study time appears
 #to reduce the tendency of high alcohol use.
+
+
+
+
+###############################################################
+#LINEAR DISCRIMINANT ANALYSIS.
+
+#see the numeric variables.
+cf<-Filter(is.numeric, alco_data)
+mm<- scale(cf)
+summary(mm)
+lda.fit <- lda(~., data = mm)
