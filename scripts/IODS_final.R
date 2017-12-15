@@ -303,14 +303,251 @@ r2grade <- r_grade$estimate^2
 r2grade
 legend("topleft", paste("r^2=", round(r2grade,3)))
 #We can see from the scatterplots that the selected variables, account for only
-#31% factors affecting the students' gradeas.
+#31% factors affecting the students' grades.
 
 
 
 
-########################################################
+####################################################################
+#####################################################################
+######################################################################
 #ABSENCE
+halc_glm<-glm(absences ~sex + age+address+Medu+Fedu+
+                Pstatus+ traveltime+studytime+famsup+activities+higher+
+                internet+famrel+romantic+freetime+goout+ high_use+G3
+              ,data=alco_data,family ="poisson")
+summary(halc_glm)
+step(halc_glm)
 
+##Final model 
+halc_glm<-glm(absences ~ sex + age + Medu + 
+                Pstatus +  studytime +  higher + 
+                internet + goout + alc_use + G3
+              ,data=alco_data,family ="poisson")
+
+anova(halc_glm, test="Chisq")
+summary(halc_glm)
+
+
+anova(halc_glm, test="Chisq")
+#########################################################################
+#dividing into 70:30
+{rep<-10
+for (i in 1:rep){
+  print(i)
+  
+  #it's not  necessary to use the 1:nrow(data) below. it can be only nrow(data)
+  rand<- sample(1:nrow(alco_data), size = 0.7*nrow(alco_data))
+  cal<- alco_data[rand,]
+  eva<-alco_data[-rand,]
+  
+  ###GLM
+  abse_glm <- glm(absences~sex + age + Medu + 
+                    Pstatus +  studytime +  higher + 
+                    internet + goout + high_use + G3, data=cal, family = "poisson") 
+  
+  abse_glm_pred<- predict.glm(object = abse_glm, newdata = eva, type="response")
+  
+  cor_glm_abse<-cor(abse_glm_pred, eva$absences, method = "spearman")
+  #abse_pred_glm_ras<- predict(model=abse_glm, object = ras_stack, fun=predict.glm, type = "response")
+  #plot(abse_pred_glm_ras)
+  
+  #########
+  #mean error and root mean square error
+  error_abse_glm<- cbind.data.frame(abse_glm_pred, eva$absences)
+  colnames(error_abse_glm) <- c("pred_glm_abse", "obs_abse")
+  
+  abse_glm_me <- mean_error(error_abse_glm$obs_abse, error_abse_glm$pred_glm_abse)
+  abse_glm_rmse <- rmse(error_abse_glm$obs_abse, error_abse_glm$pred_glm_abse)
+  
+  me_rmse_abse_glm <- rbind.data.frame(abse_glm_me, abse_glm_rmse)
+  colnames(me_rmse_abse_glm)<- c("abse_glm")
+  
+  
+  
+  
+  #GAM
+  abse_gam <- gam(absences~ sex + s(age, k=3) +s(Medu, k=3) + 
+                    Pstatus+  s(studytime, k=3) +  higher + 
+                    internet + goout + s(alc_use, k=3) +  s(G3, k=3), data = cal, family = "poisson")
+  abse_gam_pred <- predict.gam(abse_gam, newdata = eva, type = "response")
+  
+  obs_pred_abse_gam<- cbind.data.frame(abse_gam_pred, eva$absences)
+  colnames(obs_pred_abse_gam) <- c("pred_gam_abse", "obs_gam_abse")
+  #you can just calclate the correlation straight away
+  cor_gam_abse <- cor(abse_gam_pred, eva$absences, method = "spearman")
+  
+  
+  #########
+  #mean error and root mean square error
+  error_abse_gam<- cbind.data.frame(abse_gam_pred, eva$absences)
+  colnames(error_abse_gam) <- c("pred_gam_abse", "obs_abse")
+  
+  abse_gam_me <- mean_error(error_abse_gam$obs_abse, error_abse_gam$pred_gam_abse)
+  abse_gam_rmse <- rmse(error_abse_gam$obs_abse, error_abse_gam$pred_gam_abse)
+  
+  me_rmse_abse_gam <- rbind.data.frame(abse_gam_me, abse_gam_rmse)
+  colnames(me_rmse_abse_gam)<- c("abse_gam")
+  
+  
+  
+  
+  ###################################################################3
+  #using the normal gbm, package.
+  #GBM
+  abse_gbm1<-gbm(formula = absences~ sex + age+address+Medu+Fedu+
+                   Pstatus+ traveltime+studytime+famsup+activities+higher+
+                   internet+famrel+romantic+freetime+goout+ alc_use, data=cal,
+                 distribution = "poisson",n.trees = 1000, shrinkage = 0.001, interaction.depth = 6,
+                 bag.fraction = 0.75)
+  
+  best.iter<-gbm.perf(abse_gbm1, plot.it = F, method = "OOB")
+  abse_gbm1_pred<- predict.gbm(object = abse_gbm1, newdata = eva, best.iter,
+                               type="response")
+  cor_gbm1_abse <- cor(abse_gbm1_pred, eva$absences, method = "spearman")
+  
+  
+  
+  #########
+  #mean error and root mean square error
+  error_abse_gbm1<- cbind.data.frame(abse_gbm1_pred, eva$absences)
+  colnames(error_abse_gbm1) <- c("pred_gbm1_abse", "obs_abse")
+  
+  abse_gbm1_me <- mean_error(error_abse_gbm1$obs_abse, error_abse_gbm1$pred_gbm1_abse)
+  abse_gbm1_rmse <- rmse(error_abse_gbm1$obs_abse, error_abse_gbm1$pred_gbm1_abse)
+  
+  me_rmse_abse_gbm1 <- rbind.data.frame(abse_gbm1_me, abse_gbm1_rmse)
+  colnames(me_rmse_abse_gbm1)<- c("abse_gbm1")
+  
+  # par(mfrow=c(2,3))
+  # plot.gbm(abse_gbm1, 1, best.iter)
+  # plot.gbm(abse_gbm1, 2, best.iter)
+  # plot.gbm(abse_gbm1, 3, best.iter)
+  # plot.gbm(abse_gbm1, 4, best.iter)
+  # plot.gbm(abse_gbm1, 5, best.iter)
+  # plot.gbm(abse_gbm1, 6, best.iter)
+  # par(mfrow=c(1,1))
+  
+  
+  
+  ###################################################
+  #dismo package
+  
+  abse_gbm2 <- gbm.step(data=cal, gbm.x =c("sex", "age","address","Medu"
+                                           ,"Fedu","Pstatus", "traveltime","studytime","famsup","activities","higher",
+                                           "internet","famrel","romantic","freetime","goout", "alc_use"), gbm.y = "absences",
+                        bag.fraction=0.75, learning.rate = 0.001,
+                        family="poisson",n.trees=50, n.folds=10,
+                        max.trees = 1000, tree.complexity = 6)
+  
+  #This also works but can be done directly as shown in the prediction after this
+  #best.iter2<-gbm.perf(abse_gbm1, plot.it = T, method = "OOB")
+  # abse_gbm2_pred<- predict.gbm(object = abse_gbm2, newdata = eva, best.iter2,
+  #                              type="response")
+  
+  #
+  #the prediction
+  abse_gbm2_pred <- predict.gbm(abse_gbm2, newdata = eva, n.trees=abse_gbm2$n.trees, type = "response")
+  #abse_pred_gbm2_ras <- predict(object=ras_stack,model=abse_gbm2, fun=predict,
+  #                         n.trees=abse_gbm2$n.trees, type="response")
+  
+  #plot(abse_pred_gbm2_ras)
+  cor_gbm2_abse <- cor(abse_gbm2_pred, eva$absences, method = "spearman")
+  
+  #########
+  #mean error and root mean square error
+  error_abse_gbm2<- cbind.data.frame(abse_gbm2_pred, eva$absences)
+  colnames(error_abse_gbm2) <- c("pred_gbm2_abse", "obs_abse")
+  
+  abse_gbm2_me <- mean_error(error_abse_gbm2$obs_abse, error_abse_gbm2$pred_gbm2_abse)
+  abse_gbm2_rmse <- rmse(error_abse_gbm2$obs_abse, error_abse_gbm2$pred_gbm2_abse)
+  
+  me_rmse_abse_gbm2 <- rbind.data.frame(abse_gbm2_me, abse_gbm2_rmse)
+  colnames(me_rmse_abse_gbm2)<- c("abse_gbm2")
+  
+  
+  
+  
+} 
+#####All correlation
+all_cor_abse <- cbind.data.frame(cor_glm_abse,cor_gam_abse,
+                                 cor_gbm1_abse, cor_gbm2_abse)
+colnames(all_cor_abse)<- c("abse_glm", "abse_gam", "abse_gbm1", "abse_gbm2")
+
+#####all error
+all_error_abse <- cbind.data.frame(me_rmse_abse_glm, me_rmse_abse_gam,
+                                   me_rmse_abse_gbm1, me_rmse_abse_gbm2)
+rownames(all_error_abse)<- c("mean abs error", "RMSE")
+
+}
+
+
+
+#Using all the models to see the prediction
+abse_gbm1<-gbm(formula = absences~ sex + age+address+Medu+Fedu+
+                 Pstatus+ traveltime+studytime+famsup+activities+higher+
+                 internet+famrel+romantic+freetime+goout+ alc_use, data=alco_data,
+               distribution = "poisson",n.trees = 1000, shrinkage = 0.001, interaction.depth = 6,
+               bag.fraction = 0.75)
+
+summary(abse_gbm1)
+
+#I chose GBM because it is able to handle multicollinearity and complex interactions,
+#it can also show the response curves and relative importance of predictors.
+
+#alcohol use, age, mother's education, parents' status, freetime and romantic
+#relationship ostensibly, have the most effect on the cause of absences.
+#Travel time and address seem to be the least
+
+#now, let's see the response curves of this
+
+
+plot(abse_gam, pages=1)
+#Teenage students are more likely to be absent although, there seems 
+#not to be enough data for older students above 20, as the confidence interval'
+#seem high. Also. the likelihood of absences reduces with increase in the level
+#of education of the mother. Studytime also reduces this. While Alcohol increases
+#this. It is quite unsure how grade affects.
+
+#I will be expploring this further with GBM reponse curves
+
+best.iter1<-gbm.perf(abse_gbm1, plot.it = F, method = "OOB")
+
+
+par(mfrow=c(2,3))
+plot.gbm(abse_gbm1, "alc_use", best.iter1)
+plot.gbm(abse_gbm1, "age", best.iter1)
+plot.gbm(abse_gbm1, "Medu", best.iter1)
+plot.gbm(abse_gbm1, "Pstatus", best.iter1)
+plot.gbm(abse_gbm1, "freetime", best.iter1)
+plot.gbm(abse_gbm1, "romantic", best.iter1)
+par(mfrow=c(1,1))
+
+#Alcohol use, age mother's education seem to increase the tendency to be absent
+#while freetime does the opposite. This is quite surprising as, I had expected the
+#exact opposite.
+#Also, students' with parents apart have more tendency to be absent that
+#those with their parents together. Likewise, students in romantic relationship
+#are more likely to be absent than those without.
+.
+
+
+plot(predict.gbm(abse_gbm1, alco_data, best.iter1), alco_data$absences, 
+     main="Observed vs Predicted absences")
+lines(lowess(predict.gbm(abse_gbm1, alco_data, best.iter1), alco_data$absences), col="red", lwd=3)
+r_abse <-cor.test(predict.gbm(abse_gbm1, alco_data, best.iter1), alco_data$absences)
+r2abse <- r_abse$estimate^2
+r2abse
+legend("topleft", paste("r^2=", round(r2abse,3)))
+#We can see from the scatterplots that the selected variables, account for only
+#23% factors affecting the students' absences.
+
+
+
+
+#########################################################################
+##########################################################################
+###########################################################################
 
 
 
