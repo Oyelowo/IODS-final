@@ -36,33 +36,46 @@ library(FactoMineR)
 dim(alco_data)
 str(alco_data)
 summary(alco_data)
-
+glimpse(alco_data)
 # ####Grade:
-# alco_data2<-alco_data[,c("sex", "age","address","Medu","Fedu",
-#   "Pstatus", "traveltime","studytime","famsup","activities","higher",
-#   "internet","famrel","romantic","freetime","goout", "alc_use",
-#   "higgrade_use","G1","G2","G3", "absences")]
-# alco_data2[,"absences"]
-# colnames(alco_data2)
-# 
-# str(alco_data2)
-# summary(alco_data2)
-# 
-# alco_facto<- alco_data[,c("sex","address",
-#     "Pstatus","famsup","activities","higher",
-#       "internet","romantic","higgrade_use")]
-# mca_alco <- MCA(alco_facto, graph = T)
-# 
-# plot(mca_alco, invisible=c("ind"), habillage="quali")
-# 
-# 
-# alco_data3<-alco_data[,c("sex","address","Medu","Fedu",
-#       "Pstatus", "traveltime","studytime","famsup","activities","higher",
-#        "internet","famrel","romantic","freetime","goout")]
-# str(mm)
-# mm<-replace(alco_data3, TRUE, lapply(alco_data2, factor))
-# ss<- MCA(alco_facto, graph = T)
+alco_data2<-alco_data[,c("sex", "age","address","Medu","Fedu",
+  "Pstatus", "traveltime","studytime","famsup","activities","higher",
+  "internet","famrel","romantic","freetime","goout", "alc_use",
+  "higgrade_use","G1","G2","G3", "absences")]
+alco_data2[,"absences"]
+colnames(alco_data2)
 
+str(alco_data2)
+summary(alco_data2)
+
+alco_facto<- alco_data[,c("sex","address",
+    "Pstatus","famsup","activities","higher",
+      "internet","romantic","higgrade_use")]
+mca_alco <- MCA(alco_facto, graph = T)
+
+plot(mca_alco, invisible=c("ind"), habillage="quali")
+
+
+alco_data3<-alco_data[,c("sex","address","Medu","Fedu",
+      "Pstatus", "traveltime","studytime","famsup","activities","higher",
+       "internet","famrel","romantic","freetime","goout")]
+str(mm)
+mm<-replace(alco_data3, TRUE, lapply(alco_data2, factor))
+ss<- MCA(alco_facto, graph = T)
+
+
+
+
+
+
+
+
+
+
+
+###################################################################
+###################################################################
+#REGRESSION MODELS(DLM, GAM, GBM)
 
 
 grade_glm<-glm(G3~ sex + age+address+Medu+Fedu+
