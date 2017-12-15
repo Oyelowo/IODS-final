@@ -3,8 +3,8 @@ rm(list=ls())
 
 #read data
 fpath<- "C:/Users/oyeda/Desktop/OPEN_DATA_SCIENCE/IODS-final/data/"
-alco_dataz <- read.table(paste0(fpath, "alcohol_student.csv"), sep=",", header=T)
-
+alco_data <- read.table(paste0(fpath, "alcohol_student.csv"), sep=",", header=T)
+alco_data<- alco_data[,-1]
 #My aim is to demonstrate the use of various statistical techniques in getting insight in to
 #the data. Firstly, I will use the basic desctiptive statitstics to understand
 #the distribution, correlation and dependencies(cor, barplot, histogram, biplot etc)
@@ -33,72 +33,152 @@ library(FactoMineR)
 #Absence is affected by same factors
 #alcohol consumption is affected by same factors
 
-dim(data_reg)
-str(data_reg)
-summary(data_reg)
-glimpse(data_reg)
+categ = apply(alco_data, 2, function(x) nlevels(as.factor(x)))
+categ
+dim(alco_data)
+str(alco_data)
+summary(alco_data)
+glimpse(alco_data)
 # ####Grade:
-data_mca<-data_reg[,c("sex", "age","address","Medu","Fedu",
-  "Pstatus", "traveltime","studytime","famsup","activities","higher",
-  "internet","famrel","romantic","freetime","goout", "alc_use",
-  "high_use","G1","G2","G3", "absences")]
+
+#bar plot of the variables
+gather(alco_data) %>% ggplot(aes(value)) + facet_wrap("key", scales = "free") + geom_bar() 
+
+
+#To avoid, confusion, I will copy the data into a new data frame for MCA
+data_mca <- alco_data
+
+#Firstly, I will be extracting the categorical variables, as factors
+#now, filter them out for the MCA
+data_mca_fac1<-Filter(is.factor, data_mca)
+
+#par(mfrow=c(1,2))
+#now, perform the MCA on the catergorial/qualitative variables
+mca_alco1 <- MCA(data_mca_fac1, graph = T)
+
+#plot it
+plot(mca_alco1, invisible=c("ind"), habillage="quali")
+#par(mfrow=c(1,1))
+
+# Getting a better biplot for MCA using ggplot
+## number of categories per variable
+categ = apply(data_mca_fac1, 2, function(x) nlevels(as.factor(x)))
+categ
+
+# data frame with variable coordinates
+mca_vars_df = data.frame(mca_alco1$var$coord, Variable = rep(names(categ), categ))
+mca_vars_df
+
+
+# data frame with observation coordinates
+mca_obs_df = data.frame(mca_alco1$ind$coord)
+
+
+# MCA plot of observations and categories
+ggplot(data = mca_obs_df, aes(x = Dim.1, y = Dim.2)) +
+  geom_hline(yintercept = 0, colour = "gray70") +
+  geom_vline(xintercept = 0, colour = "gray70") +
+  geom_point(colour = "gray50", alpha = 0.0) +
+  geom_density2d(colour = "gray80") +
+  geom_text(data = mca_vars_df, 
+            aes(x = Dim.1, y = Dim.2, 
+                label = rownames(mca_vars_df), colour = Variable)) +
+  ggtitle("MCA plot of variables using R package FactoMineR") +
+  scale_colour_discrete(name = "Variable")
 
 
 
-#To avoid, ,confusion, I will copy the data into a new data frame for MCA
-data_mca <- data_reg
+
+
+#Next, I will be categorising grade(G3), absences, Mother's education(Medu),
+#father's education
+data_mca2<- alco_data
+#now, convert mother and father's education level into something more understandable.
+#data_mca$Medu<- factor(data_mca$Medu)
+data_mca2$Medu<- factor(data_mca2$Medu, labels=c("no", "pr","5-9th", "sec", "hiE"))
+data_mca2$Fedu<- factor(data_mca2$Medu, labels=c("no", "pr","5-9th", "sec", "hiE"))
+
+#Now, let's categorise grades according to quartiles
+bins_abs<- quantile(data_mca2$absences)
+data_mca2$absences<-cut(data_mca2$absences, breaks=bins_abs, include.lowest=T,
+                       labels=c("vlow", "low", "high", "vhigh"))
+
+#same to grade(G3)
+bins_gra<- quantile(data_mca2$G3)
+data_mca2$G3<-cut(data_mca$G3, breaks=bins_gra, include.lowest=T,
+                 labels=c("vlow", "low", "high", "vhigh"))
 
 #Getting the columns that are factors
 #since MCA is for categorical variables, I will be filtering the categorical
 #variables/factors and also categorise some of the variables of interest
 #such as absences, grade(G3). I will also factorise other variables of interest
 #that are in integer forms.
-xx<-Filter(is.factor, data_mca)
+
+#let's first see the variables already in factor format
+names(Filter(is.factor, data_mca2))
+
+#now, filter them out for the MCA
+data_mca_fac2_<-Filter(is.factor, data_mca2)
+
+#include the high alcohol use column
+high_use<-factor(alco_data[,"high_use"])
+
+#join with the dataframe with categorical varianles
+data_mca_fac2_<-cbind.data.frame(data_mca_fac2_, high_use)
+str(data_mca_fac2_)
 
 #The above can also be done with dplyr which has been loaded already too
 #data_mca %>% Filter(f = is.factor)
 
-#let's see the names of the variables
-xx<- data_mca[,c(names(Filter(is.factor, data_mca)), "Medu")]
-
+#names of the variables again ?
+names(data_mca_fac2_) 
 #Alternative for finding the column name that are factors
-# names(data_reg)[ sapply(data_reg, is.factor) ]
+# names(data_)[ sapply(data_reg, is.factor) ]
 # #or
 # data_reg %>% Filter(f = is.factor) %>% names
 # or
 # data_reg %>% summarise_each(funs(is.factor)) %>% unlist %>% .[.] %>% names
 
-names(data_mca) 
-#Now, I will be categorising grade(G3), absences, Mother's education(Medu),
-#father's education
 
+#I will select few of the variables for clarity sake and include the sex too
+data_mca_fac2<-data_mca_fac2_[,c("sex",names(data_mca_fac2_[,(10:ncol(data_mca_fac2_))]))]
+    
+#now, perform the MCA on the catergorial/qualitative variables
+mca_alco2 <- MCA(data_mca_fac2, graph = T)
 
-data_mca[,"absences"]
-colnames(data_mca)
-
-#now, convert mother and father's education level into something more understandable.
-data_mca$Medu<- factor(data_mca$Medu, labels=c("none", "prim","5-9th grade", "sec", "higher"))
-data_mca$Fedu<- factor(data_mca$Medu, labels=c("none", "prim","5-9th grade", "sec", "higher"))
-
-#Now, let's categorise grades according to quartiles
-bins_abs<- quantile(data_mca$absences)
-data_mca$absences<-cut(data_mca$absences, breaks=bins_abs, include.lowest=T,
-                         labels=c("very_low", "low", "high", "very_high"))
-
-#same to grade(G3)
-bins_gra<- quantile(data_mca$G3)
-data_mca$G3<-cut(data_mca$G3, breaks=bins_gra, include.lowest=T,
-                         labels=c("very_low", "low", "high", "very_high"))
-
-mca_alco <- MCA(xx, graph = T)
-
-plot(mca_alco, invisible=c("ind"), habillage="quali")
+#plot it
+plot(mca_alco2, invisible=c("ind"), habillage="quali")
 
 
 
+# Getting a better biplot for MCA using ggplot
+## number of categories per variable
+categ2 = apply(data_mca_fac2, 2, function(x) nlevels(as.factor(x)))
+categ2
+
+# data frame with variable coordinates
+mca_vars_df2 = data.frame(mca_alco2$var$coord, Variable = rep(names(categ2), categ2))
+#mca_vars_df2
 
 
+# data frame with observation coordinates
+mca_obs_df2 = data.frame(mca_alco2$ind$coord)
 
+
+# MCA plot of observations and categories
+ggplot(data = mca_obs_df2, aes(x = Dim.1, y = Dim.2)) +
+  geom_hline(yintercept = 0, colour = "gray70") +
+  geom_vline(xintercept = 0, colour = "gray70") +
+  geom_point(colour = "gray50", alpha = 0.1) +
+  geom_density2d(colour = "gray80") +
+  geom_text(data = mca_vars_df2, 
+            aes(x = Dim.1, y = Dim.2, 
+                label = rownames(mca_vars_df2), colour = Variable)) +
+  ggtitle("MCA plot of variables") +
+  scale_colour_discrete(name = "Variable")
+
+
+#Here, we can see the categorisation and association
 
 
 
