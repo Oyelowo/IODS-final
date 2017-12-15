@@ -3,7 +3,7 @@ rm(list=ls())
 
 #read data
 fpath<- "C:/Users/oyeda/Desktop/OPEN_DATA_SCIENCE/IODS-final/data/"
-alco_data <- read.table(paste0(fpath, "alcohol_student.csv"), sep=",", header=T)
+alco_dataz <- read.table(paste0(fpath, "alcohol_student.csv"), sep=",", header=T)
 
 #My aim is to demonstrate the use of various statistical techniques in getting insight in to
 #the data. Firstly, I will use the basic desctiptive statitstics to understand
@@ -33,35 +33,66 @@ library(FactoMineR)
 #Absence is affected by same factors
 #alcohol consumption is affected by same factors
 
-dim(alco_data)
-str(alco_data)
-summary(alco_data)
-glimpse(alco_data)
+dim(data_reg)
+str(data_reg)
+summary(data_reg)
+glimpse(data_reg)
 # ####Grade:
-alco_data2<-alco_data[,c("sex", "age","address","Medu","Fedu",
+data_mca<-data_reg[,c("sex", "age","address","Medu","Fedu",
   "Pstatus", "traveltime","studytime","famsup","activities","higher",
   "internet","famrel","romantic","freetime","goout", "alc_use",
-  "higgrade_use","G1","G2","G3", "absences")]
-alco_data2[,"absences"]
-colnames(alco_data2)
+  "high_use","G1","G2","G3", "absences")]
 
-str(alco_data2)
-summary(alco_data2)
 
-alco_facto<- alco_data[,c("sex","address",
-    "Pstatus","famsup","activities","higher",
-      "internet","romantic","higgrade_use")]
-mca_alco <- MCA(alco_facto, graph = T)
+
+#To avoid, ,confusion, I will copy the data into a new data frame for MCA
+data_mca <- data_reg
+
+#Getting the columns that are factors
+#since MCA is for categorical variables, I will be filtering the categorical
+#variables/factors and also categorise some of the variables of interest
+#such as absences, grade(G3). I will also factorise other variables of interest
+#that are in integer forms.
+xx<-Filter(is.factor, data_mca)
+
+#The above can also be done with dplyr which has been loaded already too
+#data_mca %>% Filter(f = is.factor)
+
+#let's see the names of the variables
+xx<- data_mca[,c(names(Filter(is.factor, data_mca)), "Medu")]
+
+#Alternative for finding the column name that are factors
+# names(data_reg)[ sapply(data_reg, is.factor) ]
+# #or
+# data_reg %>% Filter(f = is.factor) %>% names
+# or
+# data_reg %>% summarise_each(funs(is.factor)) %>% unlist %>% .[.] %>% names
+
+names(data_mca) 
+#Now, I will be categorising grade(G3), absences, Mother's education(Medu),
+#father's education
+
+
+data_mca[,"absences"]
+colnames(data_mca)
+
+#now, convert mother and father's education level into something more understandable.
+data_mca$Medu<- factor(data_mca$Medu, labels=c("none", "prim","5-9th grade", "sec", "higher"))
+data_mca$Fedu<- factor(data_mca$Medu, labels=c("none", "prim","5-9th grade", "sec", "higher"))
+
+#Now, let's categorise grades according to quartiles
+bins_abs<- quantile(data_mca$absences)
+data_mca$absences<-cut(data_mca$absences, breaks=bins_abs, include.lowest=T,
+                         labels=c("very_low", "low", "high", "very_high"))
+
+#same to grade(G3)
+bins_gra<- quantile(data_mca$G3)
+data_mca$G3<-cut(data_mca$G3, breaks=bins_gra, include.lowest=T,
+                         labels=c("very_low", "low", "high", "very_high"))
+
+mca_alco <- MCA(xx, graph = T)
 
 plot(mca_alco, invisible=c("ind"), habillage="quali")
-
-
-alco_data3<-alco_data[,c("sex","address","Medu","Fedu",
-      "Pstatus", "traveltime","studytime","famsup","activities","higher",
-       "internet","famrel","romantic","freetime","goout")]
-str(mm)
-mm<-replace(alco_data3, TRUE, lapply(alco_data2, factor))
-ss<- MCA(alco_facto, graph = T)
 
 
 
@@ -77,13 +108,17 @@ ss<- MCA(alco_facto, graph = T)
 ###################################################################
 #REGRESSION MODELS(DLM, GAM, GBM)
 
+#As done earlier, the data will be copied into a new dataframe for 
+#all the regression analysis, to avoid confusion and alteration of 
+#the original data
+data_reg <- alco_data
 
 grade_glm<-glm(G3~ sex + age+address+Medu+Fedu+
                  Pstatus+ traveltime+studytime+famsup+activities+higher+
                  internet+famrel+romantic+freetime+goout+ alc_use+ absences
-               ,data=alco_data,family ="poisson")
+               ,data=data_reg,family ="poisson")
 
-grade_glm<-glm(G3~ Medu + higher,data=alco_data,family ="poisson")
+grade_glm<-glm(G3~ Medu + higher,data=data_reg,family ="poisson")
 summary(grade_glm)
 
 #for GLM, predictors were selected, by employing the significance test from the model
@@ -94,7 +129,7 @@ anova(grade_glm, test = "Chisq")
 
 #In accordance to the principl of parsimony, I decided to use variables
 #with significance level of 0.05
-#Final model:  glm(G3~ Medu + higher,data=alco_data,family ="poisson")
+#Final model:  glm(G3~ Medu + higher,data=data_reg,family ="poisson")
 
 ##########################################3
 #GLM, GAM, GBM
@@ -121,9 +156,9 @@ rmse <- function(obs, pred){
     print(i)
     
     #it's not  necessary to use the 1:nrow(data) below. it can be only nrow(data)
-    rand<- sample(1:nrow(alco_data), size = 0.7*nrow(alco_data))
-    cal<- alco_data[rand,]
-    eva<-alco_data[-rand,]
+    rand<- sample(1:nrow(data_reg), size = 0.7*nrow(data_reg))
+    cal<- data_reg[rand,]
+    eva<-data_reg[-rand,]
     
     ###GLM
     grade_glm <- glm(G3~Medu + higher, data=cal, family = "poisson") 
@@ -266,7 +301,7 @@ rmse <- function(obs, pred){
 #Using all the models to see the prediction
 grade_gbm1<-gbm(formula = G3~ sex + age+address+Medu+Fedu+
                   Pstatus+ traveltime+studytime+famsup+activities+higher+
-                  internet+famrel+romantic+freetime+goout+ alc_use+ absences, data=alco_data,
+                  internet+famrel+romantic+freetime+goout+ alc_use+ absences, data=data_reg,
                 distribution = "poisson",n.trees = 1000, shrinkage = 0.001, interaction.depth = 6,
                 bag.fraction = 0.75)
 
@@ -308,10 +343,10 @@ par(mfrow=c(1,1))
 #reduction if it becomes chronic.
 
 
-plot(predict.gbm(grade_gbm1, alco_data, best.iter1), alco_data$G3, 
+plot(predict.gbm(grade_gbm1, data_reg, best.iter1), data_reg$G3, 
      main="Observed vs Predicted grade")
-lines(lowess(predict.gbm(grade_gbm1, alco_data, best.iter1), alco_data$G3), col="red", lwd=3)
-r_grade <-cor.test(predict.gbm(grade_gbm1, alco_data, best.iter1), alco_data$G3)
+lines(lowess(predict.gbm(grade_gbm1, data_reg, best.iter1), data_reg$G3), col="red", lwd=3)
+r_grade <-cor.test(predict.gbm(grade_gbm1, data_reg, best.iter1), data_reg$G3)
 r2grade <- r_grade$estimate^2
 r2grade
 legend("topleft", paste("r^2=", round(r2grade,3)))
@@ -328,7 +363,7 @@ legend("topleft", paste("r^2=", round(r2grade,3)))
 halc_glm<-glm(absences ~sex + age+address+Medu+Fedu+
                 Pstatus+ traveltime+studytime+famsup+activities+higher+
                 internet+famrel+romantic+freetime+goout+ high_use+G3
-              ,data=alco_data,family ="poisson")
+              ,data=data_reg,family ="poisson")
 summary(halc_glm)
 step(halc_glm)
 
@@ -336,7 +371,7 @@ step(halc_glm)
 halc_glm<-glm(absences ~ sex + age + Medu + 
                 Pstatus +  studytime +  higher + 
                 internet + goout + alc_use + G3
-              ,data=alco_data,family ="poisson")
+              ,data=data_reg,family ="poisson")
 
 anova(halc_glm, test="Chisq")
 summary(halc_glm)
@@ -350,9 +385,9 @@ for (i in 1:rep){
   print(i)
   
   #it's not  necessary to use the 1:nrow(data) below. it can be only nrow(data)
-  rand<- sample(1:nrow(alco_data), size = 0.7*nrow(alco_data))
-  cal<- alco_data[rand,]
-  eva<-alco_data[-rand,]
+  rand<- sample(1:nrow(data_reg), size = 0.7*nrow(data_reg))
+  cal<- data_reg[rand,]
+  eva<-data_reg[-rand,]
   
   ###GLM
   abse_glm <- glm(absences~sex + age + Medu + 
@@ -499,7 +534,7 @@ rownames(all_error_abse)<- c("mean abs error", "RMSE")
 #Using all the models to see the prediction
 abse_gbm1<-gbm(formula = absences~ sex + age+address+Medu+Fedu+
                  Pstatus+ traveltime+studytime+famsup+activities+higher+
-                 internet+famrel+romantic+freetime+goout+ alc_use, data=alco_data,
+                 internet+famrel+romantic+freetime+goout+ alc_use, data=data_reg,
                distribution = "poisson",n.trees = 1000, shrinkage = 0.001, interaction.depth = 6,
                bag.fraction = 0.75)
 
@@ -545,10 +580,10 @@ par(mfrow=c(1,1))
 
 
 
-plot(predict.gbm(abse_gbm1, alco_data, best.iter1), alco_data$absences, 
+plot(predict.gbm(abse_gbm1, data_reg, best.iter1), data_reg$absences, 
      main="Observed vs Predicted absences")
-lines(lowess(predict.gbm(abse_gbm1, alco_data, best.iter1), alco_data$absences), col="red", lwd=3)
-r_abse <-cor.test(predict.gbm(abse_gbm1, alco_data, best.iter1), alco_data$absences)
+lines(lowess(predict.gbm(abse_gbm1, data_reg, best.iter1), data_reg$absences), col="red", lwd=3)
+r_abse <-cor.test(predict.gbm(abse_gbm1, data_reg, best.iter1), data_reg$absences)
 r2abse <- r_abse$estimate^2
 r2abse
 legend("topleft", paste("r^2=", round(r2abse,3)))
@@ -575,7 +610,7 @@ legend("topleft", paste("r^2=", round(r2abse,3)))
 halc_glm<-glm(high_use ~sex + age+address+Medu+Fedu+
                 Pstatus+ traveltime+studytime+famsup+activities+higher+
                 internet+famrel+romantic+freetime+goout+ absences
-              ,data=alco_data,family ="binomial")
+              ,data=data_reg,family ="binomial")
 
 summary(halc_glm)
 
@@ -583,7 +618,7 @@ stepAIC(halc_glm, direction = "both")
 
 #final model for high alcohol use
 halc_glm<-glm(high_use ~sex + studytime + goout + absences
-              ,data=alco_data,family ="binomial")
+              ,data=data_reg,family ="binomial")
 
 anova(halc_glm, test = "Chisq")
 
@@ -599,9 +634,9 @@ anova(halc_glm, test = "Chisq")
     print(i)
     
     #it's not  necessary to use the 1:nrow(data) below. it can be only nrow(data)
-    rand<- sample(1:nrow(alco_data), size = 0.7*nrow(alco_data))
-    cal<- alco_data[rand,]
-    eva<-alco_data[-rand,]
+    rand<- sample(1:nrow(data_reg), size = 0.7*nrow(data_reg))
+    cal<- data_reg[rand,]
+    eva<-data_reg[-rand,]
     
     ####
     #GLM
@@ -683,7 +718,7 @@ mean_auc_halc<-colMeans(compared_model_halc)
 #Here, i decided to use the entire data for the analysis
 #GAM
 halc_gam<-gam(high_use~ sex+ s(studytime, k=3) + s(goout, k=3) + 
-                s(absences, k=3) , data =alco_data, family = "binomial")
+                s(absences, k=3) , data =data_reg, family = "binomial")
 summary(halc_gam)
 #plot the response curves from GAM
 plot(halc_gam, pages=1)
@@ -702,7 +737,7 @@ plot(halc_gam, pages=1)
 #GBM
 halc_gbm1<-gbm(formula = high_use~ sex + age+address+Medu+Fedu+
                  Pstatus+ traveltime+studytime+famsup+activities+higher+
-                 internet+famrel+romantic+freetime+goout+ absences, data=alco_data,
+                 internet+famrel+romantic+freetime+goout+ absences, data=data_reg,
                distribution = "bernoulli",n.trees = 2800, shrinkage = 0.001, interaction.depth = 6,
                bag.fraction = 0.75)
 summary(halc_gbm1)
