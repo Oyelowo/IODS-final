@@ -529,7 +529,7 @@ par(mfrow=c(1,1))
 #Also, students' with parents apart have more tendency to be absent that
 #those with their parents together. Likewise, students in romantic relationship
 #are more likely to be absent than those without.
-.
+
 
 
 plot(predict.gbm(abse_gbm1, alco_data, best.iter1), alco_data$absences, 
