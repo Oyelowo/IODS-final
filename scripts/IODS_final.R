@@ -902,7 +902,113 @@ plot.gbm(halc_gbm1, "studytime", best.iter1)
 #LINEAR DISCRIMINANT ANALYSIS.
 
 #see the numeric variables.
-cf<-Filter(is.numeric, alco_data)
-mm<- scale(cf)
+data_mca
+cf<-Filter(is.numeric, data_mca)
+mm<- data.frame( scale(cf))
 summary(mm)
-lda.fit <- lda(~., data = mm)
+mm$G1<-NULL
+mm$G2<-NULL
+mm$G3<-NULL
+
+colnames(mm)
+G3<-data_mca_fac2[,c("G3")]
+mnn<- cbind(mm, G3)
+
+
+summary(mnn)
+lda.fit <- lda(G3~., data = mnn)
+lda.fit
+
+lda.arrows <- function(x, myscale = 1, arrow_heads = 0.1, color = "red", tex = 0.75, choices = c(1,2)){
+  heads <- coef(x)
+  arrows(x0 = 0, y0 = 0, 
+         x1 = myscale * heads[,choices[1]], 
+         y1 = myscale * heads[,choices[2]], col=color, length = arrow_heads)
+  text(myscale * heads[,choices], labels = row.names(heads), 
+       cex = tex, col=color, pos=3)
+}
+
+mnn$alc_use <- as.numeric(mnn$alc_use)
+plot(lda.fit, dimen = 2, col = mnn$alc_use, pch= mnn$alc_use)
+lda.arrows(lda.fit, myscale = 2)
+
+#failures in the past is contributing most to poor grades
+
+
+
+data_mca
+cf<-Filter(is.numeric, data_mca)
+mm<- data.frame( scale(cf))
+summary(mm)
+
+mm$alc_use<-NULL
+mm$Walc<-NULL
+mm$Dalc<-NULL
+
+colnames(mm)
+alc_use<-alco_data[,c("alc_use")]
+mnn<- cbind(mm, alc_use)
+
+
+summary(mnn)
+#lda.fit <- lda(alc_use~., data = mnn)
+#lda.fit
+
+
+set.seed(123)
+
+# determine the number of clusters
+k_max <- 10
+
+# calculate the total within sum of squares
+twcss <- sapply(1:k_max, function(k){kmeans(mnn, k)$tot.withinss})
+
+# visualize the results
+qplot(x = 1:k_max, y = twcss, geom = 'line')
+
+# k-means clustering
+km <-kmeans(mnn, centers = 4)
+
+#convert km to dataframe
+# boston_standard2<-as.data.frame(boston_standard2)
+
+lda.fit_clus<- lda(km$cluster~., data=mnn)
+
+# plot the mnnt with clusters
+#pairs(mnn[,3:7], col = km$cluster)
+
+
+
+
+lda.arrows <- function(x, myscale = 1, arrow_heads = 0.1, color = "red", tex = 0.75, choices = c(1,2)){
+  heads <- coef(x)
+  arrows(x0 = 0, y0 = 0, 
+         x1 = myscale * heads[,choices[1]], 
+         y1 = myscale * heads[,choices[2]], col=color, length = arrow_heads)
+  text(myscale * heads[,choices], labels = row.names(heads), 
+       cex = tex, col=color, pos=3)
+}
+
+mnn$alc_use <- as.numeric(mnn$alc_use)
+plot(lda.fit, dimen = 2, col = mnn$alc_use, pch= mnn$alc_use)
+lda.arrows(lda.fit, myscale = 2)
+
+
+
+#here, we can see that going out, free time and absences tend
+#tend to cause high alcohol use.
+#on the other hand, study tume, family relationship tend to reduce it
+
+model_predictors <- dplyr::select(mnn, -alc_use)
+
+# matrix multiplication
+matrix_product <- as.matrix(model_predictors) %*% lda.fit$scaling
+matrix_product <- as.data.frame(matrix_product)
+
+#Next, install and access the plotly package. Create a 3D plot (Cool!) of the columns of the matrix product by typing the code below.
+library(plotly)
+#using the plotly package for 3D plotting of the matrix products' columns.
+
+plot_ly(x = matrix_product$LD1, y = matrix_product$LD2, z = matrix_product$LD3, type= 'scatter3d', mode='markers')
+
+#plot_ly(x = matrix_product$LD1, y = matrix_product$LD2, z = matrix_product$LD3, type= 'scatter3d', mode='markers', color=mnn$alc_use)
