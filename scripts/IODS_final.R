@@ -697,12 +697,12 @@ summary(halc_gbm1)
 #relationship seem to have the highest effect on high alcohol use. 
 #The least important factors can also be seen from the model summary.
 
-plot()
+
 
 #Now, i'll show the response curve from GBM to see the effects
 
 plot(halc_gbm1)
-best.iter1<-gbm.perf(halc_gbm1, plot.it = T, method = "OOB")
+best.iter1<-gbm.perf(halc_gbm1, plot.it = F, method = "OOB")
 
 # pred_halc_gbm1<-predict.gbm(halc_gbm1,newdata = eva, best.iter1, type = "response")
 
