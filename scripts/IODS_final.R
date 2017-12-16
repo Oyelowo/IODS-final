@@ -266,23 +266,58 @@ test.var.mn(alco_data$absences)
 #the original data
 data_reg <- alco_data
 
-grade_glm<-glm(G3~ sex + age+address+Medu+Fedu+
-                 Pstatus+ traveltime+studytime+famsup+activities+higher+
-                 internet+famrel+romantic+freetime+goout+ alc_use+ absences
-               ,data=data_reg,family ="poisson")
-
-grade_glm<-glm(G3~ Medu + higher,data=data_reg,family ="poisson")
-summary(grade_glm)
-
 #for GLM, predictors were selected, by employing the significance test from the model
 #summary, anova test(Chi Square), AIC values and stepwise regression. I also checked 
 #if any of the predictor is curvillinear(i.e has higher order polynomial)
+
+
+grade_glm<-glm(G3~ sex + age+address+Medu+Fedu+
+                 Pstatus+ traveltime+studytime+famsup+activities+higher+
+                 internet+famrel+romantic+freetime+goout+ alc_use+ absences
+               ,data=data_reg,family ="gaussian")
+
+#First, I used the stepwise regression to eliminate the redundant variables.
 stepAIC(grade_glm, direction = "both")
-anova(grade_glm, test = "Chisq")
+
+#I got this: glm(G3~ address + Medu + studytime + higher + romantic 
+#goout,data=data_reg,family ="gaussian")
+
+
+#Thereafter, anova Chi square test and the T.test from the model summary
+#were used to further eliminate the insiginificant variables at level 0.05
+#After this, "romantic" was slightly below the level and hence, removed
+grade_glm<-glm(G3~ address + Medu  + studytime + higher + 
+                 goout,data=data_reg,family ="gaussian")
+
+#here, we can see that the significant factors affecting students'
+#grades include, address, mother's level of education, studytime,
+#ambition to further higher education, and going out. 
+#Mother's education and higher education ambition seem to be the
+#most significatn factors. However, mother's education level is not
+#curvillear(i.e does not have higher order polynomial/ "I(Medu^2)")
+
+
 
 #In accordance to the principl of parsimony, I decided to use variables
 #with significance level of 0.05
-#Final model:  glm(G3~ Medu + higher,data=data_reg,family ="poisson")
+#Final model:  grade_glm<-glm(G3~ address + Medu  + studytime + higher + 
+#goout,data=data_reg,family ="gaussian")
+
+#let's also see the if any observation has a leverage
+#and to further test the normality assumption while I also 
+#explore the how the residuals differ from the fitted
+
+par(mfrow=c(2,2))
+plot(grade_glm, which = c(1,2,5))
+
+#from this, the constant variance of the error seem to be in line.
+#The distribution also appears to be normal from the Normal Q-Q plot
+#although, slight divergence from the line at the lower level.
+#Also, no observation seem to have a clear leverage over others
+#aside a point lying quite farther from others. Nevertheless, 
+#gaussian distribution can be safely utilised for modelling the
+#grde(G3) response variable.
+
 
 ##########################################3
 #GLM, GAM, GBM
@@ -302,47 +337,76 @@ rmse <- function(obs, pred){
 }
 
 
+
 #########################################################################
+###BOOSTRAPPING AND MODELLING.
+#GRADE.
+#This part is for the model validation. The data was divided into
+#70% training/calibration data and 30% testing/evaluation data. 
+#It was also boostrapped 10 times. The results of the models and
+#the response curves were thereafter presented.
 #dividing into 70:30
+
+# #First copy, the original data into new dataframe, to avoid confusion
+# data_reg<-alco_data
 {rep<-10
   for (i in 1:rep){
+    #print the index to see the iteration
     print(i)
     
-    #it's not  necessary to use the 1:nrow(data) below. it can be only nrow(data)
+    #Creare a 70 sample(with replacement) from the original data
     rand<- sample(1:nrow(data_reg), size = 0.7*nrow(data_reg))
+    
+    #70% for the train/calibration data
     cal<- data_reg[rand,]
+    
+    #remaining 30 for the test/evaluation data
     eva<-data_reg[-rand,]
     
-    ###GLM
-    grade_glm <- glm(G3~Medu + higher, data=cal, family = "poisson") 
+    ####GLM
+    #perform a Genelralised Linear Model(GLM)
+    grade_glm <- glm(G3~address + Medu  + studytime + higher + 
+                       goout, data=cal, family = "poisson") 
     
+    #predict into the test/evaluation data
     grade_glm_pred<- predict.glm(object = grade_glm, newdata = eva, type="response")
     
+    #find the correlation between the train and test data.
     cor_glm_grade<-cor(grade_glm_pred, eva$G3, method = "spearman")
-    #grade_pred_glm_ras<- predict(model=grade_glm, object = ras_stack, fun=predict.glm, type = "response")
-    #plot(grade_pred_glm_ras)
+    
     
     #########
     #mean error and root mean square error
+    #calculate the mean error
     error_grade_glm<- cbind.data.frame(grade_glm_pred, eva$G3)
     colnames(error_grade_glm) <- c("pred_glm_grade", "obs_grade")
     
+    #Use the function created earlier to calulcate the mean error and RMSE.
+    #Mean error
     grade_glm_me <- mean_error(error_grade_glm$obs_grade, error_grade_glm$pred_glm_grade)
+    
+    #RMSE
     grade_glm_rmse <- rmse(error_grade_glm$obs_grade, error_grade_glm$pred_glm_grade)
     
+    #combine the dataframe of the mean error and RMSE
     me_rmse_grade_glm <- rbind.data.frame(grade_glm_me, grade_glm_rmse)
+    
+    #Change the column name to something more descriptive.
     colnames(me_rmse_grade_glm)<- c("grade_glm")
     
     
     
     
     #GAM
-    grade_gam <- gam(G3~ s(Medu, k=3) + higher, data = cal, family = "poisson")
+    grade_gam <- gam(G3~ s(Medu, k=3) + higher + address + s(studytime, k=3) + higher +
+                       goout, data = cal, family = "gaussian")
+    
     grade_gam_pred <- predict.gam(grade_gam, newdata = eva, type = "response")
     
     obs_pred_grade_gam<- cbind.data.frame(grade_gam_pred, eva$G3)
     colnames(obs_pred_grade_gam) <- c("pred_gam_grade", "obs_gam_grade")
-    #you can just calclate the correlation straight away
+    
+    #you can just calculate the correlation straight away
     cor_gam_grade <- cor(grade_gam_pred, eva$G3, method = "spearman")
     
     
@@ -366,7 +430,7 @@ rmse <- function(obs, pred){
     grade_gbm1<-gbm(formula = G3~ sex + age+address+Medu+Fedu+
                       Pstatus+ traveltime+studytime+famsup+activities+higher+
                       internet+famrel+romantic+freetime+goout+ alc_use+ absences, data=cal,
-                   distribution = "poisson",n.trees = 1000, shrinkage = 0.001, interaction.depth = 6,
+                   distribution = "gaussian",n.trees = 1000, shrinkage = 0.001, interaction.depth = 6,
                    bag.fraction = 0.75)
     
     best.iter<-gbm.perf(grade_gbm1, plot.it = F, method = "OOB")
@@ -387,25 +451,15 @@ rmse <- function(obs, pred){
     me_rmse_grade_gbm1 <- rbind.data.frame(grade_gbm1_me, grade_gbm1_rmse)
     colnames(me_rmse_grade_gbm1)<- c("grade_gbm1")
     
-    # par(mfrow=c(2,3))
-    # plot.gbm(grade_gbm1, 1, best.iter)
-    # plot.gbm(grade_gbm1, 2, best.iter)
-    # plot.gbm(grade_gbm1, 3, best.iter)
-    # plot.gbm(grade_gbm1, 4, best.iter)
-    # plot.gbm(grade_gbm1, 5, best.iter)
-    # plot.gbm(grade_gbm1, 6, best.iter)
-    # par(mfrow=c(1,1))
-    
-    
     
     ###################################################
-    #dismo package
+    #GBM(dismo package)
     
     grade_gbm2 <- gbm.step(data=cal, gbm.x =c("sex", "age","address","Medu"
                  ,"Fedu","Pstatus", "traveltime","studytime","famsup","activities","higher",
                  "internet","famrel","romantic","freetime","goout", "alc_use", "absences"), gbm.y = "G3",
                           bag.fraction=0.75, learning.rate = 0.001,
-                          family="poisson",n.trees=50, n.folds=10,
+                          family="gaussian",n.trees=50, n.folds=10,
                           max.trees = 1000, tree.complexity = 6)
     
     #This also works but can be done directly as shown in the prediction after this
@@ -433,9 +487,6 @@ rmse <- function(obs, pred){
     me_rmse_grade_gbm2 <- rbind.data.frame(grade_gbm2_me, grade_gbm2_rmse)
     colnames(me_rmse_grade_gbm2)<- c("grade_gbm2")
     
-    
-    
-    
   } 
   #####All correlation
   all_cor_grade <- cbind.data.frame(cor_glm_grade,cor_gam_grade,
@@ -449,13 +500,22 @@ rmse <- function(obs, pred){
   
 }
 
+#let's see the correlation between the predicted and observed response variable
+all_cor_grade
+#They al are low and not so much different.
+
+
+#Below, we can see the errors of the various models.
+all_error_grade
+
+#There appears to be not much difference
 
 
 #Using all the models to see the prediction
 grade_gbm1<-gbm(formula = G3~ sex + age+address+Medu+Fedu+
                   Pstatus+ traveltime+studytime+famsup+activities+higher+
                   internet+famrel+romantic+freetime+goout+ alc_use+ absences, data=data_reg,
-                distribution = "poisson",n.trees = 1000, shrinkage = 0.001, interaction.depth = 6,
+                distribution = "gaussian",n.trees = 1000, shrinkage = 0.001, interaction.depth = 6,
                 bag.fraction = 0.75)
 
 summary(grade_gbm1)
@@ -463,17 +523,18 @@ summary(grade_gbm1)
 #I chose GBM because it is able to handle multicollinearity and complex interactions,
 #it can also show the response curves and relative importance of predictors.
 
-#here, we can see that higher education pursuit, mother's educaton, alc use,
+#here, we can see that higher education pursuit, mother's educaton level, alc use,
 # and absences seem to be most important factors affecting students performances
 #This is quite in line with the results I got from my GLM and GAM, however,
 #only mother's education level and higher_use seem to be the significant
 #factors. The least important factors are also shown in the GBM's summary of
 #relative importance.
 
-#now, let's see the response curves of this
-
-
+#now, let's see the response curves of this from GAM
+grade_gam <- gam(G3~ s(Medu, k=3) + higher + address + s(studytime, k=3) + higher +
+                   goout, data = cal, family = "gaussian")
 plot(grade_gam, pages=1)
+
 #Here, from the smooth curve from GAM, we can see that mother's education
 #level has a positive effect on student's performance. However, the confidence
 #interval especially at the lower level. is quite large, which shows that there
@@ -504,7 +565,7 @@ r2grade <- r_grade$estimate^2
 r2grade
 legend("topleft", paste("r^2=", round(r2grade,3)))
 #We can see from the scatterplots that the selected variables, account for only
-#31% factors affecting the students' grades.
+#32% factors affecting the students' grades.
 
 
 
@@ -550,8 +611,7 @@ for (i in 1:rep){
   abse_glm_pred<- predict.glm(object = abse_glm, newdata = eva, type="response")
   
   cor_glm_abse<-cor(abse_glm_pred, eva$absences, method = "spearman")
-  #abse_pred_glm_ras<- predict(model=abse_glm, object = ras_stack, fun=predict.glm, type = "response")
-  #plot(abse_pred_glm_ras)
+  
   
   #########
   #mean error and root mean square error
@@ -620,15 +680,6 @@ for (i in 1:rep){
   me_rmse_abse_gbm1 <- rbind.data.frame(abse_gbm1_me, abse_gbm1_rmse)
   colnames(me_rmse_abse_gbm1)<- c("abse_gbm1")
   
-  # par(mfrow=c(2,3))
-  # plot.gbm(abse_gbm1, 1, best.iter)
-  # plot.gbm(abse_gbm1, 2, best.iter)
-  # plot.gbm(abse_gbm1, 3, best.iter)
-  # plot.gbm(abse_gbm1, 4, best.iter)
-  # plot.gbm(abse_gbm1, 5, best.iter)
-  # plot.gbm(abse_gbm1, 6, best.iter)
-  # par(mfrow=c(1,1))
-  
   
   
   ###################################################
@@ -667,8 +718,6 @@ for (i in 1:rep){
   colnames(me_rmse_abse_gbm2)<- c("abse_gbm2")
   
   
-  
-  
 } 
 #####All correlation
 all_cor_abse <- cbind.data.frame(cor_glm_abse,cor_gam_abse,
@@ -682,6 +731,11 @@ rownames(all_error_abse)<- c("mean abs error", "RMSE")
 
 }
 
+#correlation between the predicted and observed for all the models used.
+all_cor_abse
+
+#let's see the errors in the prediction for "absence" response variable.
+all_error_abse
 
 
 #Using all the models to see the prediction
@@ -701,8 +755,10 @@ summary(abse_gbm1)
 #Travel time and address seem to be the least
 
 #now, let's see the response curves of this
-
-
+#use all the dataset
+abse_gam <- gam(absences~ sex + s(age, k=3) +s(Medu, k=3) + 
+                  Pstatus+  s(studytime, k=3) +  higher + 
+                  internet + goout + s(alc_use, k=3) +  s(G3, k=3), data = alco_data, family = "poisson")
 plot(abse_gam, pages=1)
 #Teenage students are more likely to be absent although, there seems 
 #not to be enough data for older students above 20, as the confidence interval'
@@ -852,6 +908,20 @@ mean_auc_halc<-colMeans(compared_model_halc)
 #  attach(compared_model_halc)
 # wilcox.test(halc_auc_gbm1, halc_auc_gam, paird=T)
 
+#let's see the auc values for all the models
+compared_model_halc
+
+#show the AUC curves from the last iteration on the test data
+par(mfrow=c(2,2))
+colAUC(pred_halc_glm, eva$high_use , plotROC = T)
+colAUC(pred_halc_gam, eva$high_use , plotROC = T)
+colAUC(pred_halc_gbm1, eva$high_use , plotROC = T)
+colAUC(pred_halc_gbm2, eva$high_use , plotROC = T)
+par(mfrow=c(1,1))
+
+#The mean auc values for all the models
+mean_auc_halc
+
 #Here, I utilised Area Under Curve for evaluating my model. This 
 #is because it prevents subjectiveness in selecting thresholds which can
 #significantly affect the predictive performance and commission and omission error.
@@ -925,12 +995,150 @@ plot.gbm(halc_gbm1, "studytime", best.iter1)
 
 
 
+###ODDS RATIO
+#explore the odd's ratio
+halc_glm_mod <- glm(high_use~  sex + studytime + goout + absences, data=data_reg, family = "binomial") 
+odds_ra <- exp(coef(halc_glm_mod))
+#odds_ra <- coef(high_use_mod2) %>% exp     #alternaive
+
+# compute confidence intervals (conf_int)
+conf_int <- exp(confint(halc_glm_mod)) 
+#Conf_Int <- high_use_mod2 %>%  confint() %>% exp   #alternative
+
+# print out the odds ratios with their confidence intervals
+cbind(odds_ra, conf_int)
+
+#Here, we can also see that the odd's ratio of Male students, absences
+# and going out are more than 1, which indicates success: that they all increase
+#the tendency of high alcohol consumption by students. This is
+#not surprising. Absence from school and going out would normally be
+#expected to result in high alcohol use.
+#The confidence interval shows that it is highly likely that these
+#factors affect.
+#On the other hand, study time shows failure with high alcohol consumption
+#which is also not surprising, because when studying more, one
+#would expect that students have less time for going out and
+#getting drunk. 
+#These results are all in accordance with the results of the 
+#models used earlier.
+
+
+#######################################
+#CONFUSION MATRIX
+#ERROR IN PREDICTD HIGH ALCOHOL USE.
+#Although, AUC is preferred, as it considers all possible threshold
+#and prevent subjectiveness, I will be exploring a confusion matrix too
+#and 0.5 will be made the threshold for TRUE or FALSE for high
+#alcohol use. More information on creating functions to calculate
+#these metrics in a more automated way can be found [here](http://rpubs.com/prcuny/161764)
+
+#fit the model
+# predict() the probability of high_use
+probs<- predict(halc_glm_mod, type = "response")
+
+#Copy the data again
+alc<-data_reg
+
+#add the predicted probabilities to 'alc'
+alc$prob_high_use <- probs
+#alc <- mutate(alc, probability = probabilities)
+
+#use the probabilities to make a prediction of high_use, setting 0.5 as threshold
+alc$predict_high_use<- (alc$prob_high_use)>0.5
+#alc <- mutate(alc, prediction = prob_high_use>0.5)
+
+#see the first ten and last ten original classes, predicted probabilities, and class predictions
+head(alc[,c("failures", "absences", "sex", "high_use", "prob_high_use", "predict_high_use")], n=10)
+
+#tabulate the target variable versus the predictions
+table(high_use = alc$high_use, prediction = alc$predict_high_use)
+
+#Here, I derived the various classification matrix's metrics
+#Accuracy: Overall, how often is the classifier correct?
+#(TP+TN)/total
+accuracy<- (252 + 49)/nrow(alc)
+print(paste("The accuracy of the classification is", accuracy))
+
+#Error rate
+print(paste("The error rate/misclassification is", 1-accuracy))
+
+
+#True Positive Rate:
+#"Sensitivity" or "Recall": When actually yes, how often does it predict yes?
+#(TP/actual yes)
+print(paste("The True positive rate/Sensitivity is", 49/(65+49)))
+
+#False Positive Rate: i.e When actually no, how often does it predict yes?
+print(paste("The false positive rate is", 16/(16+252)))
+
+#Specificity: When actually no, how often does it predict no?
+#TN/actual no
+#Alternatively: 1 minus False Positive Rate
+print(paste("The Specificity is", 252/(252+16)))
+
+#Precision: When it predicts yes, how often is it correct?
+#TP/predicted yes
+print(paste("The precision is", 49/(16+49)))
+
+#Prevalence: How often does the yes condition actually occur in our sample?
+#actual yes/total
+print(paste("The prevalence is", (65+49)/nrow(alc)))
+
+
+
+#Accuracy of the prediction is about 0.79 which is fairly good.
+#Miclassification/error rate is about 0.21
+#By using threshold of 0.5, we can see that 252 FALSE high alcohol
+#use were Truly/rightly predicted and 16 falsely predicted. 
+#There are also 49 high alcohol use that were Truly predicted
+#while 65, wrongly predicted. The prediction seems to be better
+#when predicting no high alcohol use(i.e Specifity) than when
+#predicting the true value(sensitivity. This can also be seen in the plot below.
+
+# initialize a plot of 'high_use' versus 'probability' in 'alc'
+g <- ggplot(alc, aes(x = prob_high_use, y = high_use, col= predict_high_use))
+
+# define the geom as points and draw the plot
+g + geom_point()
+
+#Proportion of errors
+conf_mat<-table(high_use = alc$high_use, prediction = alc$predict_high_use)
+conf_mat<-prop.table(conf_mat)
+addmargins(conf_mat)
+
+#mean error of the prediction
+mean(abs(alc$high_use-alc$prob_high_use)>0.5)
+
+#The below is an alternative way by firstly defining the function to calculate the mean error.
+# define a loss function (mean prediction error)
+loss_func <- function(class, prob) {
+  n_wrong <- abs(class - prob) > 0.5
+  mean(n_wrong)
+}
+
+# call loss_func to compute the average number of wrong predictions in the (training) data
+loss_func(class = alc$high_use, prob = alc$prob_high_use)
+
+#K-fold cross-validation
+library(boot)
+cv <- cv.glm(data = alc, cost = loss_func, glmfit = halc_glm_mod, K = 10)
+
+# average number of wrong predictions in the cross validation
+cv$delta[1]
+
+
+#Here I used an arbitrary threshold of 0.5 but it has been 
+#suggested that prevalence can be used in selection of threshold.
+#you can see more [here](http://www.dataschool.io/simple-guide-to-confusion-matrix-terminology/) 
+#about terminologies related to confusion/classification
+#matrix
+
 
 ###############################################################
 #LINEAR DISCRIMINANT ANALYSIS.
 
 #see the numeric variables.
-data_mca
+data_mca<- alco_data
 cf<-Filter(is.numeric, data_mca)
 mm<- data.frame( scale(cf))
 summary(mm)
