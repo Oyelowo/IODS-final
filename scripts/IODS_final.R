@@ -5,6 +5,8 @@ rm(list=ls())
 fpath<- "C:/Users/oyeda/Desktop/OPEN_DATA_SCIENCE/IODS-final/data/"
 alco_data <- read.table(paste0(fpath, "alcohol_student.csv"), sep=",", header=T)
 alco_data<- alco_data[,-1]
+
+
 #My aim is to demonstrate the use of various statistical techniques in getting insight in to
 #the data. Firstly, I will use the basic desctiptive statitstics to understand
 #the distribution, correlation and dependencies(cor, barplot, histogram, biplot etc)
@@ -225,6 +227,32 @@ ggplot(data = mca_obs_df2, aes(x = Dim.1, y = Dim.2)) +
 #This will be further explored with family of regression models
 #(GLM, GAM, GBM)
 
+#Before I proceed, there is need to determine the error distribution
+#of the response variables here. As in many realistic cases, we
+#do not have normal distribution(i.e gaussian), we could also have
+#poisson distribution for count data and last is the binomial distribution
+#(e.g Yes/No, Presence/Absence).
+#that said, one of the assumptions of poisson distribution is 
+#that variance is greater than mean. Therefore, I will be creating
+#a function to test this assumption and decide the kind  of distribution.
+#You can see more [here](http://datavoreconsulting.com/programming-tips/count-data-glms-choosing-poisson-negative-binomial-zero-inflated-poisson/)
+
+#Create function to test variance>mean assumption of poisson distribution
+test.var.mn<- function(x){
+  if(var(x)>mean(x)){
+    print("VALID:The variance>mean assumption of poisson distribution is valid")
+  }
+  else{
+    print("INVALID:The variance>mean assumption of poisson distribution is invalid")
+  }
+}
+
+#see if Grade(G3) meets te assumption
+test.var.mn(alco_data$G3)
+
+
+#next, see if "absences" meets the assumption
+test.var.mn(alco_data$absences)
 
 
 
@@ -1011,4 +1039,4 @@ library(plotly)
 
 plot_ly(x = matrix_product$LD1, y = matrix_product$LD2, z = matrix_product$LD3, type= 'scatter3d', mode='markers')
 
-#plot_ly(x = matrix_product$LD1, y = matrix_product$LD2, z = matrix_product$LD3, type= 'scatter3d', mode='markers', color=mnn$alc_use)
+plot_ly(x = matrix_product$LD1, y = matrix_product$LD2, z = matrix_product$LD3, type= 'scatter3d', mode='markers', color=mnn$alc_use)
