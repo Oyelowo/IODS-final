@@ -91,19 +91,19 @@ ggplot(data = mca_obs_df, aes(x = Dim.1, y = Dim.2)) +
   ggtitle("MCA plot of variables using R package FactoMineR") +
   scale_colour_discrete(name = "Variable")
 
-#Here, we can see that female students generally attend school
-#because of her reputation and get more school support.
-#They also have family support and are able to attend paid extra
-#classes. Most of their father's job are in the health sector.
-#High alcohol consumption is more rampant amongst female students
-#compared to their male counterparts with high alcohol use.
-#male students also attend the school based on course preference
-#and other reasons. By and large, they do not attend paid extra classes
-#compared to the female students and also do not get family and
-#school support like the frmale students.
-#LAstly, they mosly have no intention of pursuing higher education.
-#This is explored further by categorising more continuous variables
-#such as grades, absences, to allow for comparison with other variables.
+# Here, we can see that female students generally attend school
+# because of her reputation and get more school support.
+# They also have family support and are able to attend paid extra
+# classes. Most of their father's job are in the health sector.
+# High alcohol consumption is more rampant amongst female students
+# compared to their male counterparts with high alcohol use.
+# male students also attend the school based on course preference
+# and other reasons. By and large, they do not attend paid extra classes
+# compared to the female students and also do not get family and
+# school support like the frmale students.
+# LAstly, they mosly have no intention of pursuing higher education.
+# This is explored further by categorising more continuous variables
+# such as grades, absences, to allow for comparison with other variables.
 
 
 
@@ -237,6 +237,7 @@ ggplot(data = mca_obs_df2, aes(x = Dim.1, y = Dim.2)) +
 #a function to test this assumption and decide the kind  of distribution.
 #You can see more [here](http://datavoreconsulting.com/programming-tips/count-data-glms-choosing-poisson-negative-binomial-zero-inflated-poisson/)
 
+
 #Create function to test variance>mean assumption of poisson distribution
 test.var.mn<- function(x){
   if(var(x)>mean(x)){
@@ -247,7 +248,7 @@ test.var.mn<- function(x){
   }
 }
 
-#see if Grade(G3) meets te assumption
+#see if Grade(G3) meets the assumption
 test.var.mn(alco_data$G3)
 
 
@@ -288,6 +289,8 @@ stepAIC(grade_glm, direction = "both")
 #After this, "romantic" was slightly below the level and hence, removed
 grade_glm<-glm(G3~ address + Medu  + studytime + higher + 
                  goout,data=data_reg,family ="gaussian")
+
+anova(grade_glm, test="Chisq")
 
 #here, we can see that the significant factors affecting students'
 #grades include, address, mother's level of education, studytime,
@@ -338,6 +341,8 @@ rmse <- function(obs, pred){
 
 
 
+
+
 #########################################################################
 ###BOOSTRAPPING AND MODELLING.
 #GRADE.
@@ -347,8 +352,8 @@ rmse <- function(obs, pred){
 #the response curves were thereafter presented.
 #dividing into 70:30
 
-# #First copy, the original data into new dataframe, to avoid confusion
-# data_reg<-alco_data
+#First copy, the original data into new dataframe, to avoid confusion
+data_reg<-alco_data
 {rep<-10
   for (i in 1:rep){
     #print the index to see the iteration
@@ -502,7 +507,7 @@ rmse <- function(obs, pred){
 
 #let's see the correlation between the predicted and observed response variable
 all_cor_grade
-#They al are low and not so much different.
+#They all are low and not so much different.
 
 
 #Below, we can see the errors of the various models.
@@ -972,7 +977,7 @@ summary(halc_gbm1)
 
 #Now, i'll show the response curve from GBM to see the effects
 
-plot(halc_gbm1)
+#plot(halc_gbm1)
 best.iter1<-gbm.perf(halc_gbm1, plot.it = F, method = "OOB")
 
 # pred_halc_gbm1<-predict.gbm(halc_gbm1,newdata = eva, best.iter1, type = "response")
@@ -1008,19 +1013,19 @@ conf_int <- exp(confint(halc_glm_mod))
 # print out the odds ratios with their confidence intervals
 cbind(odds_ra, conf_int)
 
-#Here, we can also see that the odd's ratio of Male students, absences
+# Here, we can also see that the odd's ratio of Male students, absences
 # and going out are more than 1, which indicates success: that they all increase
-#the tendency of high alcohol consumption by students. This is
-#not surprising. Absence from school and going out would normally be
-#expected to result in high alcohol use.
-#The confidence interval shows that it is highly likely that these
-#factors affect.
-#On the other hand, study time shows failure with high alcohol consumption
-#which is also not surprising, because when studying more, one
-#would expect that students have less time for going out and
-#getting drunk. 
-#These results are all in accordance with the results of the 
-#models used earlier.
+# the tendency of high alcohol consumption by students. This is
+# not surprising. Absence from school and going out would normally be
+# expected to result in high alcohol use.
+# The confidence interval shows that it is highly likely that these
+# factors affect.
+# On the other hand, study time shows failure with high alcohol consumption
+# which is also not surprising, because when studying more, one
+# would expect that students have less time for going out and
+# getting drunk.
+# These results are all in accordance with the results of the
+# models used earlier.
 
 
 #######################################
