@@ -634,7 +634,7 @@ par(mfrow=c(1,1))
 
 ```
 
-As we can see here, the higher the level of education of the mother, their kids seem to perform better. Also, students� with intention to pursue higher education seem to perform better.
+As we can see here, the higher the level of education of the mother, their kids seem to perform better. Also, studentsä with intention to pursue higher education seem to perform better.
 Alcohol use and absences reduces performance and can result in dramatic reduction if it becomes chronic.
 
 
@@ -1235,7 +1235,7 @@ probs<- predict(halc_glm_mod, type = "response")
 #Copy the data again
 alc<-data_reg
 
-#add the predicted probabilities to 'alc'
+#add the predicted probabilities to ‘alc’
 alc$prob_high_use <- probs
 #alc <- mutate(alc, probability = probabilities)
 
@@ -1573,7 +1573,7 @@ matrix_product <- as.data.frame(matrix_product)
 
 #Next, install and access the plotly package. Create a 3D plot (Cool!) of the columns of the matrix product by typing the code below.
 library(plotly)
-#using the plotly package for 3D plotting of the matrix products' columns.
+#using the plotly package for 3D plotting of the matrix products’ columns.
 
 plot_ly(x = matrix_product$LD1, y = matrix_product$LD2, z = matrix_product$LD3, type= 'scatter3d', mode='markers')
 
