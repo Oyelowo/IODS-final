@@ -579,24 +579,24 @@ legend("topleft", paste("r^2=", round(r2grade,3)))
 #####################################################################
 ######################################################################
 #ABSENCE
-halc_glm<-glm(absences ~sex + age+address+Medu+Fedu+
+abse_glm<-glm(absences ~sex + age+address+Medu+Fedu+
                 Pstatus+ traveltime+studytime+famsup+activities+higher+
                 internet+famrel+romantic+freetime+goout+ high_use+G3
               ,data=data_reg,family ="poisson")
-summary(halc_glm)
-step(halc_glm)
+summary(abse_glm)
+step(abse_glm)
 
 ##Final model 
-halc_glm<-glm(absences ~ sex + age + Medu + 
+abse_glm<-glm(absences ~ sex + age + Medu + 
                 Pstatus +  studytime +  higher + 
                 internet + goout + alc_use + G3
               ,data=data_reg,family ="poisson")
 
-anova(halc_glm, test="Chisq")
-summary(halc_glm)
+anova(abse_glm, test="Chisq")
+summary(abse_glm)
 
 
-anova(halc_glm, test="Chisq")
+anova(abse_glm, test="Chisq")
 #########################################################################
 #dividing into 70:30
 {rep<-10
@@ -1172,7 +1172,7 @@ test <- data_num_G3[-samp,]
 #summary
 summary(train)
 
-#remote the grades columns
+#remove the grades columns
 train$G1<-train$G2<-train$G3<-NULL
 
 #check the column names now

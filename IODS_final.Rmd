@@ -587,7 +587,7 @@ There appears to be not much difference in the errors of all the models used.
 I chose GBM because it is able to handle multicollinearity and complex interactions, it can also show the response curves and relative importance of predictors.
 GAM is also able to show response curves and their confidence intervals.
 
-```{r, message=FALSE, echo=False, warning=FALSE}
+```{r, message=FALSE, echo=FALSE, warning=FALSE}
 #Using all the models to see the prediction
 grade_gbm1<-gbm(formula = G3~ sex + age+address+Medu+Fedu+
           Pstatus+traveltime+studytime+famsup+activities+higher+           internet+famrel+romantic+freetime+goout+ alc_use+                   absences, data=data_reg,
@@ -663,13 +663,13 @@ We can see from the scatterplots that the selected variables, account for only
 For GLM, the selection of predictors was done as earlier by using stepwise regression, anova(Chis sq) test and significance test from the model summary.
 
 ```{r, message=FALSE, warning=FALSE, echo=FALSE}
-halc_glm<-glm(absences ~sex + age+address+Medu+Fedu+
-                Pstatus+  formula =                                             traveltime+studytime+famsup+activities+higher+
+abse_glm<-glm(absences ~sex + age+address+Medu+Fedu+
+                Pstatus+                                             traveltime+studytime+famsup+activities+higher+
                 internet+famrel+romantic+freetime+goout+                       high_use+G3
               ,data=data_reg,family ="poisson")
-summary(halc_glm)
-stepAIC(halc_glm)
-anova(halc_glm, test="Chisq")
+summary(abse_glm)
+stepAIC(abse_glm)
+anova(abse_glm, test="Chisq")
 
 ```
 
@@ -677,15 +677,15 @@ anova(halc_glm, test="Chisq")
 **Final model**
 
 ```{r, message=FALSE, warning=FALSE}
-halc_glm<-glm(absences ~ sex + age + Medu + 
+abse_glm<-glm(absences ~ sex + age + Medu + 
                 Pstatus +  studytime +  higher + 
                 internet + goout + alc_use + G3
               ,data=data_reg,family ="poisson")
 
 
-summary(halc_glm)
+summary(abse_glm)
 
-anova(halc_glm, test="Chisq")
+anova(abse_glm, test="Chisq")
 
 ```
 
@@ -696,6 +696,20 @@ The factors that might be causing absence of students are above.
 ```{r, message=FALSE, warning=FALSE, echo=FALSE}
 
 #########################################################################
+
+# function to calculate the mean absolute and RMSE
+#function to calculate mean error
+mean_error<- function(obs, pred){
+  me<-mean(abs(obs-pred))
+  return(me)
+}
+
+# Function that returns Root Mean Squared Error
+rmse <- function(obs, pred){
+  rmse<-sqrt(mean((obs-pred)^2))
+  return(rmse)
+}
+
 #dividing into 70:30
 {rep<-10
 for (i in 1:rep){
@@ -754,18 +768,17 @@ for (i in 1:rep){
   colnames(me_rmse_abse_gam)<- c("abse_gam")
   
   
-  ###################################################################3
+  ###################################################################
   #using the normal gbm, package.
   #GBM
-  abse_gbm1<-gbm(formula = absences~ sex + age+address+Medu+Fedu+
-                   Pstatus+ traveltime+studytime+famsup+activities+higher+
-                   internet+famrel+romantic+freetime+goout+ alc_use, data=cal,
-                 distribution = "poisson",n.trees = 1000, shrinkage = 0.001, interaction.depth = 6,
+  abse_gbm1<-gbm(formula = absences~ sex                                     +age+address+Medu+Fedu+Pstatus+traveltime+
+                   studytime+famsup+activities+higher+
+                   internet+famrel+romantic+freetime+goout+                        alc_use, data=cal,
+                 distribution = "poisson",n.trees = 1000,                         shrinkage = 0.001, interaction.depth = 6,
                  bag.fraction = 0.75)
   
   best.iter<-gbm.perf(abse_gbm1, plot.it = F, method = "OOB")
-  abse_gbm1_pred<- predict.gbm(object = abse_gbm1, newdata = eva, best.iter,
-                               type="response")
+  abse_gbm1_pred<- predict.gbm(object = abse_gbm1, newdata = eva, best.iter, type="response")
   cor_gbm1_abse <- cor(abse_gbm1_pred, eva$absences, method = "spearman")
   
   
@@ -997,7 +1010,7 @@ anova(halc_glm, test = "Chisq")
     
     ####
     #GLM
-    halc_glm <- glm(high_use~  sex + studytime + goout + absences, data=cal, family = "binomial") 
+    halc_glm <- glm(high_use~  sex + studytime + goout +               absences, data=cal, family = "binomial") 
     
     halc_glm_pred<- predict.glm(object = halc_glm, newdata = eva, type="response")
     #check the AUC of the compared prediction and evaluation
@@ -1027,12 +1040,10 @@ anova(halc_glm, test = "Chisq")
     
     #GBM2 dismo
     halc_gbm2<-gbm.step(data=cal, gbm.x =
-                          c("sex", "age","address","Medu"
-                            ,"Fedu","Pstatus", "traveltime","studytime","famsup","activities","higher",
-                            "internet","famrel","romantic","freetime","goout", "absences"), gbm.y = "high_use",
-                        bag.fraction=0.75, learning.rate = 0.001,
-                        family="bernoulli",n.trees=50, n.folds=10,
-                        max.trees = 3000, tree.complexity = 6)
+    c("sex", "age","address","Medu","Fedu","Pstatus",
+      "traveltime","studytime","famsup","activities","higher",
+"internet","famrel","romantic","freetime","goout","absences"), gbm.y = "high_use",bag.fraction=0.75, learning.rate = 0.001,
+family="bernoulli",n.trees=50, n.folds=10,max.trees = 3000, tree.complexity = 6)
     
     #prediction
     pred_halc_gbm2 <- predict.gbm(halc_gbm2, newdata = eva, n.trees=halc_gbm2$n.trees, type = "response")
@@ -1042,7 +1053,7 @@ anova(halc_glm, test = "Chisq")
     # 
     
     #plotting ROC curve and getting the value
-    halc_auc_gbm_p2<-colAUC(pred_halc_gbm2, eva$high_use , plotROC = T)
+    halc_auc_gbm_p2<-colAUC(pred_halc_gbm2, eva$high_use , plotROC = F)
     #coombining t he value into a list
     halc_auc_gbm2<- c(halc_auc_gbm2, halc_auc_gbm_p2[[1]])
     
@@ -1073,11 +1084,11 @@ mean_auc_halc
 ```
 
 
-**ROC(AUC) curves of the last iteration in the validation. **
+**ROC(AUC) curves of the various models. **
 ```{r, message=FALSE, warning=FALSE}
 #show the AUC curves from the last iteration on the test data
 par(mfrow=c(2,2))
-colAUC(pred_halc_glm, eva$high_use , plotROC = T)
+colAUC(halc_glm_pred, eva$high_use , plotROC = T)
 colAUC(pred_halc_gam, eva$high_use , plotROC = T)
 colAUC(pred_halc_gbm1, eva$high_use , plotROC = T)
 colAUC(pred_halc_gbm2, eva$high_use , plotROC = T)
@@ -1339,15 +1350,234 @@ about terminologies related to confusion/classification
 matrix.
 
 
-#LINEAR DISCRIMINANT ANALYSIS.
+#LINEAR DISCRIMINANT ANALYSIS(LDA).
 
 ```{r, message=FALSE, warning=FALSE}
+###############################################################
+#LINEAR DISCRIMINANT ANALYSIS.
 
 
+#copy data again
+data_copy2<- alco_data
+
+#filter the numeric variables.
+data_num<-Filter(is.numeric, data_copy2)
+
+#Scale the numeric variables
+data_num_sca<- data.frame( scale(data_num))
+
+#get the categorised grades created earlier into the vector
+G3_cat<-data_mca_fac2[,c("G3")]
+
+#add to to the scaled data frame
+data_num_G3<- cbind(data_num_sca, G3_cat)
+
+#summary
+summary(data_num_G3)
 ```
 
 
+
+
+
+
+**DIVIDE DATA INTO TEST AND TRAIN DATA FOR VALIDATION.
 ```{r, message=FALSE, warning=FALSE}
+#now, divide into 80:20 train:test data
+samp <- sample(1:nrow(data_num_G3), size = nrow(data_num_G3)*0.8)
+train <- data_num_G3[samp,]
+test <- data_num_G3[-samp,]
+
+
+#Dimension.
+dim(train)
+
+#remove the grades columns
+train$G1<-train$G2<-train$G3<-NULL
+
+#check the column names now
+colnames(train)
+```
+
+
+**fitting the categorised grade to all other variables**
+```{r, message=FALSE, warning=FALSE}
+#fit the categorised grade to all other variables
+lda.fit <- lda(G3_cat~., data = train)
+#lda.fit
+
+#create arrow function
+lda.arrows <- function(x, myscale = 1, arrow_heads = 0.1, color = "red", tex = 0.75, choices = c(1,2)){
+  heads <- coef(x)
+  arrows(x0 = 0, y0 = 0, 
+         x1 = myscale * heads[,choices[1]], 
+         y1 = myscale * heads[,choices[2]], col=color, length = arrow_heads)
+  text(myscale * heads[,choices], labels = row.names(heads), 
+       cex = tex, col=color, pos=3)
+}
+
+#convert the categorised grade into numeric for the LDA plot
+train$G3_cat <- as.numeric(train$G3_cat)
+
+#plot
+plot(lda.fit, dimen = 2, col = train$G3, pch= train$G3)
+lda.arrows(lda.fit, myscale = 2)
+```
+
+failures in the past is contributing most to poor grades.
+Absences also appear to be. Mother's education level seems to be a factor contributing to students' success.
+
+
+LDA CLASSIFICATION ACCURACY
+```{r, message=FALSE, warning=FALSE}
+#see the class prediction accuracy
+#G3_cat<-test$G3_cat
+test<-dplyr::select(test, -G3_cat)
+lda.pred<-predict(lda.fit, newdata = test)
+table(correct = G3_cat, predicted = lda.pred$class)
+```
+
+The table above shows the right classification and misclassification.
+
+
+**Distance between variables.**
+```{r, message=FALSE, warning=FALSE}
+#Now, see the distance between variables.
+dist_sca<-dist(data_num_sca)
+summary(dist_sca)
+```
+
+Next, cluster the data better using k-means clustering and refit the LDA using the clustered data.
+
+First, determine the optimal number of clusters using the elbow
+method of **TWCSS**.
+
+**Distance between variables.**
+```{r, message=FALSE, warning=FALSE}
+set.seed(123) #This is used to make the values constant when re-run
+# determine the number of clusters
+k_max <- 20
+
+# calculate the total within sum of squares
+twcss <- sapply(1:k_max, function(k){kmeans(data_num_sca, k)$tot.withinss})
+
+# visualize the results
+qplot(x = 1:k_max, y = twcss, geom = c('point', 'line'))
+
+############################################################
+#some other methods of exploring optimal number of classes
+# library(cluster)
+# library(factoextra)
+# # reVisualize k-means clusters
+# km.res <- kmeans(data_num_sca, 3, nstart = 25)
+# fviz_cluster(km.res, data = data_num_sca, geom = "point",
+#              stand = FALSE, frame.type = "norm")
+# 
+# #install.packages("factoextra")
+# require(cluster)
+# fviz_nbclust(data_num_sca, kmeans, method = "silhouette")
+#############################################################
+```
+
+
+**Further, use the NbClust to confirm. There are quite many others too. Two others are in the previous code chunk where the packages "cluster" and "factoextra" can be used. See more [here](http://www.sthda.com/english/wiki/print.php?id=239#required-packages) for other cluster methods of checking the optimal number of classes.
+
+
+```{r, message=FALSE, warning=FALSE}
+#install.packages("cluster")
+library(NbClust)
+nb <- NbClust(data_num_sca, diss=NULL, distance = "euclidean", 
+              min.nc=2, max.nc=5, method = "kmeans", 
+              index = "all", alphaBeale = 0.1)
+
+#Based on these, I will make my number of clusters, 3
+
+# k-means clustering
+#use the euclidean distance calculated earlier.
+km <-kmeans(dist_sca, centers = 3)
+
+#perform LDA on the clustered data
+lda.fit_clus<- lda(km$cluster~., data=data_num_sca)
+
+
+plot(lda.fit_clus, dimen = 2, col = km$cluster, pch= km$cluster)
+lda.arrows(lda.fit_clus, myscale = 2)
+```
+Seems past failure and alcohol use also causes poor performance
+
+
+```{r, message=FALSE, warning=FALSE}
+#copydata again
+data_copy2<-alco_data
+data_num2<-Filter(is.numeric, data_copy2)
+data_LDA1_sca<- data.frame( scale(data_num2))
+summary(data_LDA1_sca)
+
+#removwe the alcohol columns
+data_LDA1_sca$alc_use<-data_LDA1_sca$Walc<-data_LDA1_sca$Dalc<-NULL
+
+#see colmn names
+colnames(data_LDA1_sca)
+
+#Get the alcohol use into a cector
+alc_use<-alco_data[,c("alc_use")]
+
+#combine with the scaled data
+data_LDA2<- cbind(data_LDA1_sca, alc_use)
+
+
+#summary(data_LDA2)
+
+lda.fit2 <- lda(alc_use~., data = data_LDA2)
+#lda.fit
+
+
+#first, determine the optimal number of clusters using twcss.
+set.seed(123)
+# determine the number of clusters
+k_max <- 10
+alc_sca<-as.data.frame(scale(data_LDA2))
+# calculate the total within sum of squares
+twcss <- sapply(1:k_max, function(k){kmeans(alc_sca, k)$tot.withinss})
+
+# visualize the results
+qplot(x = 1:k_max, y = twcss, geom = 'line')
+
+# k-means clustering
+dist_alc<- dist(alc_sca)
+km <-kmeans(dist_sca, centers = 4)
+
+
+#perform LDA on the clustered data
+lda.fit_clus<- lda(km$cluster~., data=alc_sca)
+lda.fit_clus
+
+#plot
+plot(lda.fit_clus, dimen = 2, col = km$cluster, pch= km$cluster)
+lda.arrows(lda.fit_clus, myscale = 2)
+```
+
+
+Here, we can see that going out, free time and absences tend
+tend to cause high alcohol use.
+On the other hand, study tume, family relationship tend to reduce it.
+
+
+**3D VISUALISATION OF THE CLUSTERS**
+```{r, message=FALSE, warning=FALSE}
+model_predictors <- dplyr::select(data_LDA2, -alc_use)
+
+# matrix multiplication
+matrix_product <- as.matrix(model_predictors) %*% lda.fit$scaling
+matrix_product <- as.data.frame(matrix_product)
+
+#Next, install and access the plotly package. Create a 3D plot (Cool!) of the columns of the matrix product by typing the code below.
+library(plotly)
+#using the plotly package for 3D plotting of the matrix products' columns.
+
+plot_ly(x = matrix_product$LD1, y = matrix_product$LD2, z = matrix_product$LD3, type= 'scatter3d', mode='markers')
+
+plot_ly(x = matrix_product$LD1, y = matrix_product$LD2, z = matrix_product$LD3, type= 'scatter3d', mode='markers', color=data_LDA2$alc_use)
 
 
 ```
