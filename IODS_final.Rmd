@@ -302,7 +302,7 @@ It shows here that it is invalid for grade(G3) but valid for "absences" variable
   For GLM, predictors will be selected, by firstly using stepwise regression to eliminate the redundant variables. Afterwards, I will be employing the significance test from the model summary, anova test(Chi Square), and AIC values. I also checked if any of the predictor is curvillinear(i.e has higher order polynomial).
 
 
-```{r, message=FALSE, warning=FALSE}
+```{r, message=FALSE, warning=FALSE, include=FALSE}
 #As done earlier, the data will be copied into a new dataframe for 
 #all the regression analysis, to avoid confusion and alteration of 
 #the original data
@@ -403,7 +403,7 @@ This part is for the model validation. The data was divided into
 It was also boostrapped 10 times. The results of the models and
 the response curves were thereafter presented.
 dividing into 70:30
-```{r, message=FALSE, warning=FALSE}
+```{r, message=FALSE, warning=FALSE, include=FALSE}
 #First copy, the original data into new dataframe, to avoid confusion
 data_reg<-alco_data
 {rep<-10
@@ -587,7 +587,7 @@ There appears to be not much difference in the errors of all the models used.
 I chose GBM because it is able to handle multicollinearity and complex interactions, it can also show the response curves and relative importance of predictors.
 GAM is also able to show response curves and their confidence intervals.
 
-```{r, message=FALSE, echo=FALSE, warning=FALSE}
+```{r, message=FALSE, include=FALSE, warning=FALSE}
 #Using all the models to see the prediction
 grade_gbm1<-gbm(formula = G3~ sex + age+address+Medu+Fedu+
           Pstatus+traveltime+studytime+famsup+activities+higher+           internet+famrel+romantic+freetime+goout+ alc_use+                   absences, data=data_reg,
@@ -662,7 +662,7 @@ We can see from the scatterplots that the selected variables, account for only
 
 For GLM, the selection of predictors was done as earlier by using stepwise regression, anova(Chis sq) test and significance test from the model summary.
 
-```{r, message=FALSE, warning=FALSE, echo=FALSE}
+```{r, message=FALSE, warning=FALSE, include=FALSE}
 abse_glm<-glm(absences ~sex + age+address+Medu+Fedu+
                 Pstatus+                                             traveltime+studytime+famsup+activities+higher+
                 internet+famrel+romantic+freetime+goout+                       high_use+G3
@@ -693,7 +693,7 @@ The factors that might be causing absence of students are above.
 
 
 ##TRAINING AND TESTING OF MODELS FOR "ABSENCES"
-```{r, message=FALSE, warning=FALSE, echo=FALSE}
+```{r, message=FALSE, warning=FALSE, include=FALSE}
 
 #########################################################################
 
@@ -871,7 +871,7 @@ all_error_abse
 
 
 ##FITTING THE REGRESSION FOR "ABSENCES" WITH GBM
-```{r, message=FALSE, warning=FALSE, echo=FALSE}
+```{r, message=FALSE, warning=FALSE, include=FALSE}
 #Using all the models to see the prediction
 abse_gbm1<-gbm(formula = absences~ sex + age+address+Medu+Fedu+
                  Pstatus+traveltime+studytime+famsup+activities+                 higher+ internet+famrel+romantic+freetime+goout+                 alc_use, data=data_reg,
@@ -964,7 +964,7 @@ We can see from the scatterplots that the selected variables, account for only 2
 Similar step was repeated here. However, in evaluating the models, I utilised **Area Under Curve(AUC), odds ratio and confusion/classification matrix**,  instead.
 
 
-```{r, message=FALSE, warning=FALSE, echo= FALSE}
+```{r, message=FALSE, warning=FALSE, include= FALSE}
 #HIGH ALCOHOL
 
 #Initial model for GLM
@@ -990,7 +990,7 @@ anova(halc_glm, test = "Chisq")
 
 
 
-```{r, message=FALSE, warning=FALSE, echo=FALSE}
+```{r, message=FALSE, warning=FALSE, include=FALSE}
 
 ############################################################
 #####################################
