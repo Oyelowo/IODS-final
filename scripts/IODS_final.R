@@ -1137,24 +1137,49 @@ cv$delta[1]
 ###############################################################
 #LINEAR DISCRIMINANT ANALYSIS.
 
-#see the numeric variables.
-data_mca<- alco_data
-cf<-Filter(is.numeric, data_mca)
-mm<- data.frame( scale(cf))
-summary(mm)
-mm$G1<-NULL
-mm$G2<-NULL
-mm$G3<-NULL
 
-colnames(mm)
-G3<-data_mca_fac2[,c("G3")]
-mnn<- cbind(mm, G3)
+#copy data again
+data_copy2<- alco_data
+
+#filter the numeric variables.
+data_num<-Filter(is.numeric, data_copy2)
+
+#Scale the numeric variables
+data_num_sca<- data.frame( scale(data_num))
+
+#get the categorised grades created earlier into the vector
+G3_cat<-data_mca_fac2[,c("G3")]
+
+#add to to the scaled data frame
+data_num_G3<- cbind(data_num_sca, G3_cat)
+
+#summary
+summary(data_num_G3)
 
 
-summary(mnn)
-lda.fit <- lda(G3~., data = mnn)
+#now, divide into 80:20 train:test data
+samp <- sample(1:nrow(data_num_G3), size = nrow(data_num_G3)*0.8)
+train <- data_num_G3[samp,]
+test <- data_num_G3[-samp,]
+
+
+
+#summary
+summary(train)
+
+#remote the grades columns
+train$G1<-train$G2<-train$G3<-NULL
+
+#check the column names now
+colnames(train)
+
+
+
+#fit the categorised grade to all other variables
+lda.fit <- lda(G3_cat~., data = train)
 lda.fit
 
+#create arrow function
 lda.arrows <- function(x, myscale = 1, arrow_heads = 0.1, color = "red", tex = 0.75, choices = c(1,2)){
   heads <- coef(x)
   arrows(x0 = 0, y0 = 0, 
@@ -1164,70 +1189,129 @@ lda.arrows <- function(x, myscale = 1, arrow_heads = 0.1, color = "red", tex = 0
        cex = tex, col=color, pos=3)
 }
 
-mnn$alc_use <- as.numeric(mnn$alc_use)
-plot(lda.fit, dimen = 2, col = mnn$alc_use, pch= mnn$alc_use)
+#convert the categorised grade into numeric for the LDA plot
+train$G3_cat <- as.numeric(train$G3_cat)
+
+#plot
+plot(lda.fit, dimen = 2, col = train$G3, pch= train$G3)
 lda.arrows(lda.fit, myscale = 2)
 
-#failures in the past is contributing most to poor grades
+#failures in the past is contributing most to poor grades.
+#Absences also appear to be. Mother's education seems to be
+#a factor contributing to students' success.
+
+#see the class prediction accuracy
+#G3_cat<-test$G3_cat
+test<-dplyr::select(test, -G3_cat)
+lda.pred<-predict(lda.fit, newdata = test)
+table(correct = G3_cat, predicted = lda.pred$class)
+#The table shows the right classification and misclassification.
+
+#Now, see the distance between variables.
+dist_sca<-dist(data_num_sca)
+summary(dist_sca)
+
+
+#####let's cluster the data better using k-means clustering
+#and refit the LDA using the clustered data
+
+#first, determine the optimal number of clusters using the elbow
+#method of twcss.
+set.seed(123) #This is used to make the values constant when re-run
+# determine the number of clusters
+k_max <- 20
+
+# calculate the total within sum of squares
+twcss <- sapply(1:k_max, function(k){kmeans(data_num_sca, k)$tot.withinss})
+
+# visualize the results
+qplot(x = 1:k_max, y = twcss, geom = c('point', 'line'))
+
+############################################################
+#some other methods of exploring optimal number of classes
+# library(cluster)
+# library(factoextra)
+# # reVisualize k-means clusters
+# km.res <- kmeans(data_num_sca, 3, nstart = 25)
+# fviz_cluster(km.res, data = data_num_sca, geom = "point",
+#              stand = FALSE, frame.type = "norm")
+# 
+# #install.packages("factoextra")
+# require(cluster)
+# fviz_nbclust(data_num_sca, kmeans, method = "silhouette")
+#############################################################
 
 
 
-data_mca
-cf<-Filter(is.numeric, data_mca)
-mm<- data.frame( scale(cf))
-summary(mm)
+install.packages("cluster")
+library(NbClust)
+nb <- NbClust(data_num_sca, diss=NULL, distance = "euclidean", 
+              min.nc=2, max.nc=5, method = "kmeans", 
+              index = "all", alphaBeale = 0.1)
 
-mm$alc_use<-NULL
-mm$Walc<-NULL
-mm$Dalc<-NULL
+#Based on these, I will make my number of clusters, 4
 
-colnames(mm)
+# k-means clustering
+#use the euclidean distance calculated earlier.
+km <-kmeans(dist_sca, centers = 3)
+
+#perform LDA on the clustered data
+lda.fit_clus<- lda(km$cluster~., data=data_num_sca)
+
+
+plot(lda.fit_clus, dimen = 2, col = km$cluster, pch= km$cluster)
+lda.arrows(lda.fit_clus, myscale = 2)
+
+#Seems past failure and alcohol use also causes poor performance
+
+#copydata again
+data_copy2<-alco_data
+data_num2<-Filter(is.numeric, data_copy2)
+data_LDA1_sca<- data.frame( scale(data_num2))
+summary(data_LDA1_sca)
+
+#remote the alcohol columns
+data_LDA1_sca$alc_use<-data_LDA1_sca$Walc<-data_LDA1_sca$Dalc<-NULL
+
+#see colmn names
+colnames(data_LDA1_sca)
+
+#Get the alcohol use into a cector
 alc_use<-alco_data[,c("alc_use")]
-mnn<- cbind(mm, alc_use)
+
+#combine with the scaled data
+data_LDA2<- cbind(data_LDA1_sca, alc_use)
 
 
-summary(mnn)
-#lda.fit <- lda(alc_use~., data = mnn)
+summary(data_LDA2)
+
+lda.fit2 <- lda(alc_use~., data = data_LDA2)
 #lda.fit
 
 
+#first, determine the optimal number of clusters using twcss.
 set.seed(123)
-
 # determine the number of clusters
 k_max <- 10
-
+alc_sca<-as.data.frame(scale(data_LDA2))
 # calculate the total within sum of squares
-twcss <- sapply(1:k_max, function(k){kmeans(mnn, k)$tot.withinss})
+twcss <- sapply(1:k_max, function(k){kmeans(alc_sca, k)$tot.withinss})
 
 # visualize the results
 qplot(x = 1:k_max, y = twcss, geom = 'line')
 
 # k-means clustering
-km <-kmeans(mnn, centers = 4)
-
-#convert km to dataframe
-# boston_standard2<-as.data.frame(boston_standard2)
-
-lda.fit_clus<- lda(km$cluster~., data=mnn)
-
-# plot the mnnt with clusters
-#pairs(mnn[,3:7], col = km$cluster)
+dist_alc<- dist(alc_sca)
+km <-kmeans(dist_sca, centers = 4)
 
 
+#perform LDA on the clustered data
+lda.fit_clus<- lda(km$cluster~., data=alc_sca)
+lda.fit_clus
 
-
-lda.arrows <- function(x, myscale = 1, arrow_heads = 0.1, color = "red", tex = 0.75, choices = c(1,2)){
-  heads <- coef(x)
-  arrows(x0 = 0, y0 = 0, 
-         x1 = myscale * heads[,choices[1]], 
-         y1 = myscale * heads[,choices[2]], col=color, length = arrow_heads)
-  text(myscale * heads[,choices], labels = row.names(heads), 
-       cex = tex, col=color, pos=3)
-}
-
-mnn$alc_use <- as.numeric(mnn$alc_use)
-plot(lda.fit, dimen = 2, col = mnn$alc_use, pch= mnn$alc_use)
-lda.arrows(lda.fit, myscale = 2)
+#plot
+plot(lda.fit_clus, dimen = 2, col = km$cluster, pch= km$cluster)
+lda.arrows(lda.fit_clus, myscale = 2)
 
 
 
@@ -1235,7 +1319,7 @@ lda.arrows(lda.fit, myscale = 2)
 #tend to cause high alcohol use.
 #on the other hand, study tume, family relationship tend to reduce it
 
-model_predictors <- dplyr::select(mnn, -alc_use)
+model_predictors <- dplyr::select(data_LDA2, -alc_use)
 
 # matrix multiplication
 matrix_product <- as.matrix(model_predictors) %*% lda.fit$scaling
@@ -1247,4 +1331,4 @@ library(plotly)
 
 plot_ly(x = matrix_product$LD1, y = matrix_product$LD2, z = matrix_product$LD3, type= 'scatter3d', mode='markers')
 
-plot_ly(x = matrix_product$LD1, y = matrix_product$LD2, z = matrix_product$LD3, type= 'scatter3d', mode='markers', color=mnn$alc_use)
+plot_ly(x = matrix_product$LD1, y = matrix_product$LD2, z = matrix_product$LD3, type= 'scatter3d', mode='markers', color=data_LDA2$alc_use)
