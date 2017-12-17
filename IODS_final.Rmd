@@ -1431,7 +1431,7 @@ Absences also appear to be. Mother's education level seems to be a factor contri
 LDA CLASSIFICATION ACCURACY
 ```{r, message=FALSE, warning=FALSE}
 #see the class prediction accuracy
-#G3_cat<-test$G3_cat
+G3_cat<-test$G3_cat
 test<-dplyr::select(test, -G3_cat)
 lda.pred<-predict(lda.fit, newdata = test)
 table(correct = G3_cat, predicted = lda.pred$class)
