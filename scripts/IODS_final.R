@@ -961,7 +961,7 @@ plot(halc_gam, pages=1)
 #insufficient data from that region.
 
 #To get a deeper, insight, I will explore this further with GBM
-
+names()
 #GBM
 halc_gbm1<-gbm(formula = high_use~ sex + age+address+Medu+Fedu+
                  Pstatus+ traveltime+studytime+famsup+activities+higher+
@@ -1173,7 +1173,7 @@ test <- data_num_G3[-samp,]
 summary(train)
 
 #remove the grades columns
-train$G1<-train$G2<-train$G3<-NULL
+train$G1 <- train$G2 <- train$G3 <- NULL
 
 #check the column names now
 colnames(train)
