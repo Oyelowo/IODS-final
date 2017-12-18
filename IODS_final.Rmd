@@ -1,12 +1,20 @@
 ---
 title: "IODS_final"
 author: "Oyedayo Oyelowo"
-date: "16 December 2017"
+date: "16 December 2017. Email: oyelowo.oyedayo@helsinki.fi"
 Email: "oyelowo.oyedayo@helsinki.fi"
 output: html_document
 ---
 
-##Loading the data set and packages
+#ABSTRACT
+This project looks into the factors affecting academic performances of students, absences and also alcohol consumption pattern. Multiple Correspondence Analysis, regression models(GLM, GAM and GBM), and Linear Discriminant analysis were used to explore the data. The result shows that female students are more successful in their studies than male students because of several factors. They get more supports for studies, are more ambitious to further to higher education, and less absent, have less high alcohol consumption, than thier male counterparts.
+Mothers' education levels, to a considerable extent, also affect students' performances and based on the MCA, female students are closer to their mother, which might be another underlying factor for their better success ahead of male students in their studies.
+Different measures were adopted to validate the models. Of all the techniques adopted, the regression models seemed to be the weakest and might require more observations and/or predictors. The prediction for the binomial variabl if high alcohol consumption was however, fairly good, after being evaluated by AUC, with average value of about 0.7 for the various modes. The precision(o.75) and accuracy(0.79) were quite good too but performed better when predicting FALSE.
+
+By and large, the result shows that female students perform better and describes the factors which play roles in their success.
+
+
+###Loading the data set and packages
 ```{r, message=FALSE, warning=FALSE}
 #clear environment
 rm(list=ls())
@@ -33,7 +41,7 @@ library(FactoMineR)
 ```
 
 
-#AIMS AND OBJECTUIVES 
+#AIMS AND OBJECTIVES 
 My aim is to demonstrate the use of various statistical techniques in getting insight in to
 the dataset, to understand the patterns alcohol consumption consumptions and absences amongst students in two schools. Further, I seek to explore the distribution of grades amongst male and female students; and factors that might be affecting this.
 Firstly, I will use the basic desctiptive statitstics to understand the distribution, correlation and dependencies(cor, barplot, histogram, biplot etc)
@@ -60,11 +68,11 @@ I will also explore Linear Discriminant Analysis(LDA) and  Multiple Corresponden
 
 
 #DATA EXPLORATION AND DESCRIPTION.
-The data includes the performances of secondary school students in two distinct subjects: Mathematics and Portuguese. It also contains demographic, social and other information about schooling. Other information related to the original data can be found from [this source](https://archive.ics.uci.edu/ml/datasets/Student+Performance). 
+The data includes 35 variables and 382 observations which describe the performances of secondary school students in two distinct subjects: Mathematics and Portuguese. It also contains demographic, social and other information about schooling. Other information related to the original data can be found from [this source](https://archive.ics.uci.edu/ml/datasets/Student+Performance). 
 
-After downloading the data, it was wrangled by combining the two different datasets related to Performances in Mathematics and Portuguese. Thereafter, Weekend and weekdays alcohol consumptions were combined by finding their average. Afterwards, a thresold of 0.5 was selected for high alcohol consumption and a boolean variable("high_use") was created from that. **_The link to my DATA WRANGLING is_**[here.](https://github.com/Oyelowo/IODS-final/blob/master/scripts/data_wrangling_alc.R)
+After downloading the data, it was wrangled by combining the two different datasets related to Performances in Mathematics and Portuguese. Thereafter, Weekend and weekdays alcohol consumptions were combined by finding their average. Afterwards, a thresold of 0.5 was selected for high alcohol consumption and a boolean variable("high_use") was created from that. **_The link to my DATA WRANGLING is_**[here.](https://github.com/Oyelowo/IODS-final/blob/master/data_wrangling_alc.R)
 
-The wrangled data can also be found [here.]()
+The wrangled data can also be found [here.](https://github.com/Oyelowo/IODS-final/blob/master/data/alcohol_student.csv)
 
 
 
@@ -75,7 +83,7 @@ The response/target variables of interest are: **_grades(G3), high alcohol consu
 
 ```{r, message=FALSE, warning=FALSE}
 categ = apply(alco_data, 2, function(x) nlevels(as.factor(x)))
-categ
+#categ
 dim(alco_data)
 str(alco_data)
 summary(alco_data)
@@ -88,8 +96,151 @@ gather(alco_data) %>% ggplot(aes(value)) + facet_wrap("key", scales = "free") + 
 
 ```
 
-  To avoid, confusion, I will copy the data into a new data frame for MCA. Firstly, I will be extracting the categorical variables, as factors
+  The above shows the distribution of the chosen predictors and also scale of alcohol consumption. The ages of the students are mainly within 15-19 with few students aged 20 and 22. Generally, there are relatively few chronic alcohol consumers amongst the students. The students seem to have quite enough free time. The respondents include 198 female students and 184 male students.
+  
+```{r, message=FALSE, warning=FALSE}
+hyp<- alco_data[,c("age", "sex",  "absences","freetime","alc_use")]
+#show the overview of the predictors and response variable(non-binomial)
+plot_hyp <- ggpairs(hyp, mapping = aes(col=sex, alpha=0.3), lower = list(combo = wrap("facethist", bins = 20)))
+plot_hyp   #draw the plot
+```  
+  
+  Here, we can see that the female students seem to be generally quite older and there are both male and female students that are much older than the general sample of the students. The absences are not so high but some chronic absentees amongst the students(both male and female). Most of the students are quite free but a few of the students are very busy. Largely, all the predictors show no correlation, hence, the issue of multicolinearity is not a problem here. However, these predictors still show very weak correlation with alcohol consumption. Nevertheless, it should be recalled that correlation is not causation. Hence, I will dig further to understand the effects of these predictors on alcohol consumption amongst students and see if they are significant.
+  
+  
+  Crosstabs
+The below are crosstabs that compare the predictors with alcohol consumption
 
+```{r, message=FALSE, warning=FALSE}
+#using the binomial response(high_use)
+#it is also possible to use simple crosstabs e.g
+#xtabs(high_use~age, data = alc)
+#but below is a more comprehensive crosstab.
+#Crosstabs
+summarise(group_by(alco_data, age,high_use), count=n(), mean_grade=mean(G3))
+
+#an alternative and preferrable way of doing the above
+#alc %>% group_by(age, high_use) %>% summarise(count=n(), mean_grade =  mean(G3))
+
+summarise(group_by(alco_data, sex,high_use), count=n(), mean_grade=mean(G3))
+
+
+summarise(group_by(alco_data, absences,high_use), count=n(), mean_grade=mean(G3))
+```
+  
+  
+  The age distribution by sex
+```{r, message=FALSE, warning=FALSE}  
+# initialize a plot of 'age'
+sex_age <- ggplot(data = alco_data, aes(x=age, col=sex))
+
+# draw a bar plot of age by sex
+sex_age + geom_bar() + facet_wrap("sex") 
+```
+
+
+**High alcohol consumption by sex**
+```{r, message=FALSE, warning=FALSE}
+# initialize a plot of 'high_use'
+hu_sex <- ggplot(data = alco_data, aes(x=sex, col=sex))
+
+# draw a bar plot of high_use by sex
+hu_sex + geom_bar() + facet_wrap("high_use")  
+```
+
+Here, we can see that there are more female who do are not high consumers of alcohol compared to men. Men consume more alchols than their female counterparts
+
+
+
+**High use vs absences**
+```{r, message=FALSE, warning=FALSE}
+# initialize a plot of 'high_use'
+hu_ab <- ggplot(data = alco_data, aes(x=absences, col=sex))
+
+# draw a bar plot of 'high_use' by freetime
+hu_ab + geom_bar() + facet_wrap("high_use")
+```
+
+
+**High use vs age**
+```{r, message=FALSE, warning=FALSE}
+# initialize a plot of 'high_use'
+hu_ag <- ggplot(data = alco_data, aes(x=age, col=sex))
+
+# draw a bar plot of 'high_use' by freetime
+hu_ag + geom_bar() + facet_wrap("high_use")
+```
+
+
+**High use vs romantic**
+```{r, message=FALSE, warning=FALSE}
+# initialize a plot of 'high_use'
+hu_rom <- ggplot(data = alco_data, aes(x=romantic, col=sex))
+
+# draw a bar plot of 'high_use' by freetime
+hu_rom + geom_bar() + facet_wrap("high_use")
+```
+
+For students in romantic relationships, they generally have lower number of them that are high consumers of alcohol. This is same with those in no romatic relationship.
+
+
+
+**BOXPLOTS**
+**Below are boxplots to give clearer pictures, as explained earlier. ##Relationship of alcohol consumption with absences**
+
+```{r, message=FALSE, warning=FALSE}
+# initialise a plot of high_use and absences
+h_ab<- ggplot(alco_data, aes(x=high_use, y=absences,col=sex))
+
+# define the plot as a boxplot and draw it
+h_ab + geom_boxplot() + ggtitle("Student absences vs alcohol consumption")
+```
+
+There are a few chronic absentees amongst male and female students, but generally, most of the students have low absences.
+
+
+**Relationship of alcohol consumption with age**
+```{r, message=FALSE, warning=FALSE}
+# initialise a plot of high_use and age
+h_ag<- ggplot(alco_data, aes(x=high_use, y=age,col=sex))
+
+# define the plot as a boxplot and draw it
+h_ag + geom_boxplot() + ggtitle("Students' age vs alcohol consumption")
+```
+
+
+**Relationship of alcohol consumption with sex**
+
+```{r, message=FALSE, warning=FALSE}
+# initialise a plot of high_use and sex
+alc_sex<- ggplot(alco_data, aes(y=alc_use, x=sex,col=sex))
+
+# define the plot as a boxplot and draw it
+alc_sex + geom_boxplot() + ggtitle("Student's alcohol consumption by sex")
+```
+
+There are a few female students with quite high alcohol consumption but the alcohol consumption levels do not vary as much as they do amongst the male students. Generally, male students tend to consume more alcohol.
+
+
+
+#METHODOLOGY.
+To understand factors that could affect students' performances, alcohol consumption pattern and absences, I will be utilising three different approaches. The first is the Multiple Correspondence Analysis(MCA) which is used for categorical variables. I will firstly explore the already categorised variables and further categorise more continuous variables for MCA. This is useful to understand the associations amongst the variables.
+
+The second approach involves the use of various regression models: Generalised Linear Model(GLM), Generalised Additive Model(GAM) and General Boosted Model(GBM). These will be used to further understand the causations. Furthermore, two GBM packages -"gbm" and "dismo"- will be used to compare their performances. In selection of the predictors for GLM, stepwise regression, t-test from model summary and anova(Chi square) test will be performed to eliminate redundancies. In GAM, variables will be selected in similar manner, and a smoothing spline function be used with appropriate degree of freedom.
+
+Also, the models of the grades(G3) and absences, will be evaluated, by using correlation, Mean Absolute error and Root Mean Square Error(RMSE). However, the modells of binomial response variable - high alcohol consumption(high_use) -  will be evaluated by adopting the Receiver operating characteristic(ROC) Area Under Curve(AUC). Confusion/Classification matrix will also be used to evaluate the precision, accuracy, sensitivity and specificity. The odds ratio will also be looked into.
+
+
+In the course of the evaluation of the regression models, the data will be divided into 70% calibration or training data and 30% evaluation or testing data. The data is also sampled by replacement and boostrapped ten times.
+
+Lastly, Linear Discriminant Analysis will be performed on categorised grades(G3) and absences. it will also be evaluated by a classification matrix.
+
+
+
+#RESULTS.
+  To avoid, confusion, I will copy the data into a new data frame for MCA. Firstly, I will be extracting the categorical variables, as factors.  
+
+##MULTIPLE CORRESPONDENCE ANALYSIS(MCA)
 ```{r, message=FALSE, warning=FALSE}
 #To avoid, confusion, I will copy the data into a new data frame for MCA
 data_mca <- alco_data
@@ -116,7 +267,7 @@ plot(mca_alco1, invisible=c("ind"), habillage="quali")
 
 ```
 
-##BETTER VISUALISATION FOR MCA
+**BETTER VISUALISATION FOR MCA**
 ```{r, message=FALSE, warning=FALSE}
 # Getting a better biplot for MCA using ggplot
 ## number of categories per variable
@@ -157,7 +308,7 @@ Lastly, they mosly have no intention of pursuing higher education. This is explo
 
 
 
-##CATEGORISE MORE VARIABLES
+**CATEGORISE MORE VARIABLES**
  
  Next, I will be categorising **_grade(G3), absences, Mother's education(Medu), father's education_**
 ```{r, message=FALSE, warning=FALSE}
@@ -280,7 +431,11 @@ because of shool's reputation.
 
 
 
-#REGRESSION MODELS(DLM, GAM, GBM)
+##REGRESSION MODELS(GLM, GAM, GBM)
+
+ GLM, GAM, GBM are quite similar but are respectively increasingly more detailed in delivering their predictions. They are all capable of handling not only gaussian distribution but also binomial and Poisson without having to transform the response variable via the identity function which uses logit and log for binomial and Poisson distributions respectively. 
+ 
+ However, GAM has the advantage over GLM of being able to present some response curves from the models more readily. It offers more flexibility. In similar vein, GBM offers even more flexibility in dealing with the explanatory variables and their interactions. By recursive binary splitting also, it is able to produce model with improved predictive performance and less error. This is done with the number of internal iterations in it. It also presents the relative importance of the predictors. 
 
   Before I proceed, there is need to determine the error distribution of the response variables here. As in many realistic cases, we do not have normal distribution(i.e gaussian), we could also have poisson distribution for count data and last is the binomial distribution
 (e.g Yes/No, Presence/Absence). That said, one of the assumptions of poisson distribution is
@@ -290,7 +445,7 @@ You can see more [here](http://datavoreconsulting.com/programming-tips/count-dat
 
 
 
-###**Create function to test variance>mean assumption of poisson distribution**
+**Create function to test variance>mean assumption of poisson distribution**
 ```{r, message=FALSE, warning=FALSE}
 #Create function to test variance>mean assumption of poisson distribution
 test.var.mn<- function(x){
@@ -306,7 +461,7 @@ test.var.mn<- function(x){
 
 
 
-#TEST THE ASSUMPTION OF POISSON DISTRIBUTION ON AGE AND ABSENCES
+**TEST THE ASSUMPTION OF POISSON DISTRIBUTION ON AGE AND ABSENCES**
 ```{r, message=FALSE, warning=FALSE}
 #see if Grade(G3) meets the assumption
 test.var.mn(alco_data$G3)
@@ -316,6 +471,7 @@ test.var.mn(alco_data$G3)
 test.var.mn(alco_data$absences)
 
 ```
+
 It shows here that it is invalid for grade(G3) but valid for "absences" variable. Next, therefore, I will be exploring various regression models, with grade(G3) as gaussian, Absences as poisson and high alcohol use(High_use) as binomial.
 
 
@@ -414,9 +570,9 @@ rmse <- function(obs, pred){
 
 
 
-#BOOSTRAPPING AND REGRESSION MODELLING(GLM, GAM & GBM).
+###BOOSTRAPPING AND REGRESSION MODELLING(GLM, GAM & GBM).
 
-##EVALUATION AND TESTING OF MODELS
+**EVALUATION AND TESTING OF MODELS**
 
 ###MODELLING GRADE(G3).
 
@@ -582,7 +738,7 @@ data_reg<-alco_data
 
 ```
 
-##VALIDATION OF REGRESSION MODELS FOR GRADE(G3)
+###VALIDATION OF REGRESSION MODELS FOR GRADE(G3)
 
 **let's see the correlation between the predicted and observed response variable**
 
@@ -604,7 +760,7 @@ all_error_grade
 There appears to be not much difference in the errors of all the models used.
 
 
-##GAM and GBM for GRADE(G3) MODELLING
+###GAM and GBM for GRADE(G3) MODELLING
 
 I chose GBM because it is able to handle multicollinearity and complex interactions, it can also show the response curves and relative importance of predictors.
 GAM is also able to show response curves and their confidence intervals.
@@ -626,11 +782,11 @@ grade_gbm1<-gbm(formula = G3~ sex + age+address+Medu+Fedu+
 summary(grade_gbm1)
 ```
 
-here, we can see that higher education pursuit, mother's educaton level, alc use, and absences seem to be most important factors affecting students performances.
+Here, we can see that higher education pursuit, mother's educaton level, alcohol use, and absences seem to be most important factors affecting students performances.
 This is quite in line with the results I got from GLM and GAM, however, only mother's education level and higher_use seem to be the significant factors. The least important factors are also shown in the GBM's summary of relative importance.
 
 
-##RESONSE CURVES(GAM  GBM,)
+###RESONSE CURVES(GAM  GBM,)
 **now, let's see the response curves of this from GAM**
 
 ```{r, message=FALSE, warning=FALSE}
@@ -679,8 +835,9 @@ We can see from the scatterplots that the selected variables, account for only
 
 
 
-#MODELLING ABSENCE(GLM, GAM, GBM)
-##MODEL EVALUATION AND VALIDATION.
+##MODELLING ABSENCE(GLM, GAM, GBM)
+
+###MODEL EVALUATION AND VALIDATION.
 
 For GLM, the selection of predictors was done as earlier by using stepwise regression, anova(Chis sq) test and significance test from the model summary.
 
@@ -714,7 +871,7 @@ anova(abse_glm, test="Chisq")
 The factors that might be causing absence of students are above.
 
 
-##TRAINING AND TESTING OF MODELS FOR "ABSENCES"
+###TRAINING AND TESTING OF MODELS FOR "ABSENCES"
 ```{r, message=FALSE, warning=FALSE, include=FALSE}
 
 #########################################################################
@@ -892,7 +1049,7 @@ all_error_abse
 
 
 
-##FITTING THE REGRESSION FOR "ABSENCES" WITH GBM
+###FITTING THE REGRESSION FOR "ABSENCES" WITH GBM
 ```{r, message=FALSE, warning=FALSE, include=FALSE}
 #Using all the models to see the prediction
 abse_gbm1<-gbm(formula = absences~ sex + age+address+Medu+Fedu+
@@ -912,8 +1069,8 @@ Alcohol use, age, mother's education, parents' status, freetime and romantic rel
 
 
 
-##RESPONSE CURVES OF "ABSENCES"
-###GAM
+###RESPONSE CURVES OF "ABSENCES"
+**GAM**
 ```{r, message=FALSE, warning=FALSE}
 #now, let's see the response curves of this
 #use all the dataset
@@ -936,7 +1093,7 @@ this. It is quite unsure how grade affects.
 Furthermore, I will be expploring this further with GBM reponse curves.
 
 
-###RESPONSE CURVES(GBM) FOR "ABSENCES"
+**RESPONSE CURVES(GBM) FOR "ABSENCES"**
 ```{r, message=FALSE, warning=FALSE}
 best.iter1<-gbm.perf(abse_gbm1, plot.it = F, method = "OOB")
 
@@ -1088,6 +1245,7 @@ family="bernoulli",n.trees=50, n.folds=10,max.trees = 3000, tree.complexity = 6)
 
 
 
+###EVALUATION OF ALCOHOL CONSUMPTION'S MODEL.
 ```{r, message=FALSE, warning=FALSE}
 # AUC values through the various iterations.
 compared_model_halc
@@ -1241,7 +1399,7 @@ models used earlier.
 
 
 
-##CONFUSION MATRIX
+###CONFUSION MATRIX
 ERROR IN PREDICTD HIGH ALCOHOL USE.
 Although, AUC is preferred, as it considers all possible threshold
 and prevent subjectiveness, I will be exploring a confusion matrix too
@@ -1329,7 +1487,7 @@ g + geom_point()
 ```
 
 
-**ALTERNATIVE FOR CALULATING THE ERROR**
+**ALTERNATIVE FOR CACLULATING THE ERROR**
 ```{r, message=FALSE, warning=FALSE}
 #Proportion of errors
 conf_mat<-table(high_use = alc$high_use, prediction = alc$predict_high_use)
@@ -1372,7 +1530,7 @@ about terminologies related to confusion/classification
 matrix.
 
 
-#LINEAR DISCRIMINANT ANALYSIS(LDA).
+##LINEAR DISCRIMINANT ANALYSIS(LDA).
 
 ```{r, message=FALSE, warning=FALSE}
 ###############################################################
@@ -1403,7 +1561,7 @@ summary(data_num_G3)
 
 
 
-**DIVIDE DATA INTO TEST AND TRAIN DATA FOR VALIDATION.
+**DIVIDE DATA INTO TEST AND TRAIN DATA FOR VALIDATION.**
 ```{r, message=FALSE, warning=FALSE}
 #now, divide into 80:20 train:test data
 samp <- sample(1:nrow(data_num_G3), size = nrow(data_num_G3)*0.8)
@@ -1450,7 +1608,7 @@ failures in the past is contributing most to poor grades.
 Absences also appear to be. Mother's education level seems to be a factor contributing to students' success.
 
 
-LDA CLASSIFICATION ACCURACY
+**LDA CLASSIFICATION ACCURACY**
 ```{r, message=FALSE, warning=FALSE}
 #see the class prediction accuracy
 G3_cat<-test$G3_cat
@@ -1603,3 +1761,16 @@ plot_ly(x = matrix_product$LD1, y = matrix_product$LD2, z = matrix_product$LD3, 
 
 
 ```
+
+
+#CONCLUSION
+
+Overall, the various analyses have shown the variation amongst the students. Female students seem to get more family and school supports than their male counterpart and are also able to attend paid extra classes more than the latter.
+
+Generally, male students consume more alcohol highly and high alcohol consumption has been shown to have a negative effect on grade. Furthermore, going out has been linked to high alcohol consumption which is more common with students that are frequently absent.
+
+On a good note, Mother's level of education plays a very vital role in students perfomance. In similar manner, ambition for higher education was found to be a considerable factor in the academic performances of the students and are more common amongst female students than male students.
+
+On this note, I will be rejecting all my null hypotheses, as high alcohol consumption has a significant effect on students' performances. Students' grades are also affected by absence.
+
+It is also noteworthy that more samples should be collected and also more variables, as most of the variables explained less than 50% of all my target/response variables :  grades, high alcohol consumption and absences.
