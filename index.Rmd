@@ -1,8 +1,17 @@
 ---
-title: "IODD final project"
-author: "Oyedayo Oyelowo"
-date: "9 November 2017"
-output: html_document
+title: "IODS Final project"
+author: 
+- name: "Oyedayo Oyelowo"
+  affiliation: "oyelowo.oyedayo@helsiki.fi"
+output:
+  html_document:
+    theme: "journal"
+    toc: true
+    toc_depth: 2
+    fig_caption: true
+    fig_width: 7
+    fig_height: 5
+    code_folding: hide
 ---
 This is the introduction to my final assignment for the open data science
 I will be working on the alcohol data set

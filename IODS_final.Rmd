@@ -6,9 +6,12 @@ Email: "oyelowo.oyedayo@helsinki.fi"
 output: html_document
 ---
 
-#ABSTRACT
+#ABSTRACT.
+
 This project looks into the factors affecting academic performances of students, absences and also alcohol consumption pattern. Multiple Correspondence Analysis, regression models(GLM, GAM and GBM), and Linear Discriminant analysis were used to explore the data. The result shows that female students are more successful in their studies than male students because of several factors. They get more supports for studies, are more ambitious to further to higher education, and less absent, have less high alcohol consumption, than thier male counterparts.
+
 Mothers' education levels, to a considerable extent, also affect students' performances and based on the MCA, female students are closer to their mother, which might be another underlying factor for their better success ahead of male students in their studies.
+
 Different measures were adopted to validate the models. Of all the techniques adopted, the regression models seemed to be the weakest and might require more observations and/or predictors. The prediction for the binomial variabl if high alcohol consumption was however, fairly good, after being evaluated by AUC, with average value of about 0.7 for the various modes. The precision(o.75) and accuracy(0.79) were quite good too but performed better when predicting FALSE.
 
 By and large, the result shows that female students perform better and describes the factors which play roles in their success.
@@ -584,6 +587,7 @@ dividing into 70:30
 ```{r, message=FALSE, warning=FALSE, include=FALSE}
 #First copy, the original data into new dataframe, to avoid confusion
 data_reg<-alco_data
+
 {rep<-10
   for (i in 1:rep){
     #print the index to see the iteration
@@ -856,6 +860,7 @@ anova(abse_glm, test="Chisq")
 **Final model**
 
 ```{r, message=FALSE, warning=FALSE}
+data_reg<- alco_data
 abse_glm<-glm(absences ~ sex + age + Medu + 
                 Pstatus +  studytime +  higher + 
                 internet + goout + alc_use + G3
