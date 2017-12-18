@@ -6,3 +6,5 @@ output: html_document
 ---
 
 This project focuses on academic perfomances of male and female students. It explores the variations between them and the possible factors causing those.
+
+Here is the link to my [final assignment](https://oyelowo.github.io/IODS-final/)
