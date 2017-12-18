@@ -62,7 +62,11 @@ I will also explore Linear Discriminant Analysis(LDA) and  Multiple Corresponden
 #DATA EXPLORATION AND DESCRIPTION.
 The data includes the performances of secondary school students in two distinct subjects: Mathematics and Portuguese. It also contains demographic, social and other information about schooling. Other information related to the original data can be found from [this source](https://archive.ics.uci.edu/ml/datasets/Student+Performance). 
 
-After downloading the data, it was wrangled by combining the two different datasets related to Performances in Mathematics and Portuguese. Thereafter, Weekend and weekdays alcohol consumptions were combined by finding their average. Afterwards, a thresold of 0.5 was selected for high alcohol consumption and a boolean variable("high_use") was created from that. **_The link to my DATA WRANGLING is_**[here]()
+After downloading the data, it was wrangled by combining the two different datasets related to Performances in Mathematics and Portuguese. Thereafter, Weekend and weekdays alcohol consumptions were combined by finding their average. Afterwards, a thresold of 0.5 was selected for high alcohol consumption and a boolean variable("high_use") was created from that. **_The link to my DATA WRANGLING is_**[here.](https://github.com/Oyelowo/IODS-final/blob/master/scripts/data_wrangling_alc.R)
+
+The wrangled data can also be found [here.]()
+
+
 
 The response/target variables of interest are: **_grades(G3), high alcohol consumption(high_use), alcohol consumption(alc_use) and absences_**. G3 is the final year grade of the students. Other information related to the description of the variables can be found from the source given above.
 
