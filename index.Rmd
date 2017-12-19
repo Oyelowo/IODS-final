@@ -2,7 +2,8 @@
 title: "IODS Final project"
 author: 
 - name: "Oyedayo Oyelowo"
-  affiliation: "oyelowo.oyedayo@helsiki.fi"
+  affiliation: "oyelowo.oyedayo@helsinki.fi"
+  date: "17th December, 2017."
 output:
   html_document:
     theme: "journal"
