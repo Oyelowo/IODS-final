@@ -1,8 +1,9 @@
 ---
-title: "IODS Final project"
+title: "IODS Final project: Factors Affecting Students' Academic Performances in Mathematics and Portuguese."
 author: 
 - name: "Oyedayo Oyelowo"
   affiliation: "oyelowo.oyedayo@helsinki.fi"
+  email 2: "oyelowooyedayo@gmail.com"
   date: "17th December, 2017."
 output:
   html_document:

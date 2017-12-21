@@ -12,7 +12,7 @@ This project looks into the factors affecting academic performances of students,
 
 Mothers' education levels, to a considerable extent, also affect students' performances and based on the MCA, female students are closer to their mother, which might be another underlying factor for their better success ahead of male students in their studies.
 
-Different measures were adopted to validate the models. Of all the techniques adopted, the regression models seemed to be the weakest and might require more observations and/or predictors. The prediction for the binomial variabl if high alcohol consumption was however, fairly good, after being evaluated by AUC, with average value of about 0.7 for the various modes. The precision(o.75) and accuracy(0.79) were quite good too but performed better when predicting FALSE.
+Different measures were adopted to validate the models. Of all the techniques adopted, the regression models seemed to be the weakest and might require more observations and/or predictors. The prediction for the binomial variable of high alcohol consumption was however, fairly good, after being evaluated by Receiver operating characteristic(ROC) Area Under Curve(AUC), with average value of about 0.7 for the various models. The precision(0.75) and accuracy(0.79) were quite good too but performed better when predicting FALSE.
 
 By and large, the result shows that female students perform better and describes the factors which play roles in their success.
 
@@ -47,52 +47,90 @@ library(FactoMineR)
 Attribute Information:
 
 # Attributes for both student-mat.csv (Math course) and student-por.csv (Portuguese language course) datasets: 
-1 school - student's school (binary: 'GP' - Gabriel Pereira or 'MS' - Mousinho da Silveira) 
-2 sex - student's sex (binary: 'F' - female or 'M' - male) 
-3 age - student's age (numeric: from 15 to 22) 
-4 address - student's home address type (binary: 'U' - urban or 'R' - rural) 
-5 famsize - family size (binary: 'LE3' - less or equal to 3 or 'GT3' - greater than 3) 
-6 Pstatus - parent's cohabitation status (binary: 'T' - living together or 'A' - apart) 
-7 Medu - mother's education (numeric: 0 - none, 1 - primary education (4th grade), 2 â???" 5th to 9th grade, 3 â???" secondary education or 4 â???" higher education) 
-8 Fedu - father's education (numeric: 0 - none, 1 - primary education (4th grade), 2 â???" 5th to 9th grade, 3 â???" secondary education or 4 â???" higher education) 
-9 Mjob - mother's job (nominal: 'teacher', 'health' care related, civil 'services' (e.g. administrative or police), 'at_home' or 'other') 
-10 Fjob - father's job (nominal: 'teacher', 'health' care related, civil 'services' (e.g. administrative or police), 'at_home' or 'other') 
-11 reason - reason to choose this school (nominal: close to 'home', school 'reputation', 'course' preference or 'other') 
-12 guardian - student's guardian (nominal: 'mother', 'father' or 'other') 
-13 traveltime - home to school travel time (numeric: 1 - <15 min., 2 - 15 to 30 min., 3 - 30 min. to 1 hour, or 4 - >1 hour) 
-14 studytime - weekly study time (numeric: 1 - <2 hours, 2 - 2 to 5 hours, 3 - 5 to 10 hours, or 4 - >10 hours) 
-15 failures - number of past class failures (numeric: n if 1<=n<3, else 4) 
-16 schoolsup - extra educational support (binary: yes or no) 
-17 famsup - family educational support (binary: yes or no) 
-18 paid - extra paid classes within the course subject (Math or Portuguese) (binary: yes or no) 
-19 activities - extra-curricular activities (binary: yes or no) 
-20 nursery - attended nursery school (binary: yes or no) 
-21 higher - wants to take higher education (binary: yes or no) 
-22 internet - Internet access at home (binary: yes or no) 
-23 romantic - with a romantic relationship (binary: yes or no) 
-24 famrel - quality of family relationships (numeric: from 1 - very bad to 5 - excellent) 
-25 freetime - free time after school (numeric: from 1 - very low to 5 - very high) 
-26 goout - going out with friends (numeric: from 1 - very low to 5 - very high) 
-27 Dalc - workday alcohol consumption (numeric: from 1 - very low to 5 - very high) 
-28 Walc - weekend alcohol consumption (numeric: from 1 - very low to 5 - very high) 
-29 health - current health status (numeric: from 1 - very bad to 5 - very good) 
-30 absences - number of school absences (numeric: from 0 to 93) 31 high_use - high alcohol consumption(boolean: TRUE or FALSE)
-32 alc_use - alcohol consumption(numeric:average of Dalc & Walc)
-# these grades are related with the course subject, Math or Portuguese: 
-31 G1 - first period grade (numeric: from 0 to 20) 
-31 G2 - second period grade (numeric: from 0 to 20) 
-32 G3 - final grade (numeric: from 0 to 20, output target)
+
+- 1 school - student's school (binary: 'GP' - Gabriel Pereira or 'MS' - Mousinho da Silveira) 
+
+- 2 sex - student's sex (binary: 'F' - female or 'M' - male) 
+
+- 3 age - student's age (numeric: from 15 to 22) 
+
+- 4 address - student's home address type (binary: 'U' - urban or 'R' - rural) 
+
+- 5 famsize - family size (binary: 'LE3' - less or equal to 3 
+or 'GT3' - greater than 3) 
+
+- 6 Pstatus - parent's cohabitation status (binary: 'T' - living together or 'A' - apart) 
+
+- 7 Medu - mother's education (numeric: 0 - none, 1 - primary education (4th grade), 2 â???" 5th to 9th grade, 3 â???" secondary education or 4 â???" higher education) 
+
+- 8 Fedu - father's education (numeric: 0 - none, 1 - primary education (4th grade), 2 â???" 5th to 9th grade, 3 â???" secondary education or 4 â???" higher education) 
+
+- 9 Mjob - mother's job (nominal: 'teacher', 'health' care related, civil 'services' (e.g. administrative or police), 'at_home' or 'other') 
+
+- 10 Fjob - father's job (nominal: 'teacher', 'health' care related, civil 'services' (e.g. administrative or police), 'at_home' or 'other') 
+
+- 11 reason - reason to choose this school (nominal: close to 'home', school 'reputation', 'course' preference or 'other') 
+
+- 12 guardian - student's guardian (nominal: 'mother', 'father' or 'other') 
+
+- 13 traveltime - home to school travel time (numeric: 1 - <15 min., 2 - 15 to 30 min., 3 - 30 min. to 1 hour, or 4 - >1 hour) 
+- 14 studytime - weekly study time (numeric: 1 - <2 hours, 2 - 2 to 5 hours, 3 - 5 to 10 hours, or 4 - >10 hours) 
+
+- 15 failures - number of past class failures (numeric: n if 1<=n<3, else 4) 
+
+- 16 schoolsup - extra educational support (binary: yes or no) 
+
+- 17 famsup - family educational support (binary: yes or no) 
+
+- 18 paid - extra paid classes within the course subject (Math or Portuguese) (binary: yes or no) 
+
+- 19 activities - extra-curricular activities (binary: yes or no)
+
+- 20 nursery - attended nursery school (binary: yes or no) 
+
+- 21 higher - wants to take higher education (binary: yes or no)
+
+- 22 internet - Internet access at home (binary: yes or no) 
+
+- 23 romantic - with a romantic relationship (binary: yes or no) 
+
+- 24 famrel - quality of family relationships (numeric: from 1 - very bad to 5 - excellent) 
+
+- 25 freetime - free time after school (numeric: from 1 - very low to 5 - very high) 
+
+- 26 goout - going out with friends (numeric: from 1 - very low to 5 - very high) 
+
+- 27 Dalc - workday alcohol consumption (numeric: from 1 - very low to 5 - very high) 
+
+- 28 Walc - weekend alcohol consumption (numeric: from 1 - very low to 5 - very high) 
+
+- 29 health - current health status (numeric: from 1 - very bad to 5 - very good) 
+
+- 30 absences - number of school absences (numeric: from 0 to 93) 
+
+- 31 high_use - high alcohol consumption(boolean: TRUE or FALSE)
+
+- 32 alc_use - alcohol consumption(numeric:average of Dalc & Walc)
+
+**these grades are related with the course subject, Math or Portuguese: **
+
+- 33 G1 - first period grade (numeric: from 0 to 20) 
+
+- 34 G2 - second period grade (numeric: from 0 to 20) 
+
+- 35 G3 - final grade (numeric: from 0 to 20, output target)
 
 
 
 
 #AIMS AND OBJECTIVES 
-My aim is to demonstrate the use of various statistical techniques in getting insight in to
-the dataset, to understand the patterns alcohol consumption consumptions and absences amongst students in two schools. Further, I seek to explore the distribution of grades amongst male and female students; and factors that might be affecting this.
-Firstly, I will use the basic desctiptive statitstics to understand the distribution, correlation and dependencies(cor, barplot, histogram, biplot etc)
-I will also be using the regression models(_**Generalized Linear Model(GLM), Generalised Additive Model(GAM) and Generalised Boosted Model(GBM))**_. Furthermore, I will test my models using 70:30 data split.
+My aims are to demonstrate the use of various statistical techniques in getting insight in to
+the dataset, to understand the patterns of alcohol consumption consumptions and absences amongst students in two schools. Furthermore, I seek to explore the distribution of grades amongst male and female students; and factors that might be affecting this.
+Firstly, I will use the basic descriptive statitstics to understand the distribution, correlation and dependencies(corrplot, barplot, histogram, biplot etc)
+I will also be using the regression models(_**Generalized Linear Model(GLM), Generalised Additive Model(GAM) and Generalised Boosted Model(GBM))**_.  
+Also, I will test my regressions models using 70:30 data split, and boostrapping with replacement sampling. 
 
-I will also explore Linear Discriminant Analysis(LDA) and  Multiple Correspondence Analysis(MCA), to classify and categorise the data.
+Lastly. I will adopt Linear Discriminant Analysis(LDA) and  Multiple Correspondence Analysis(MCA), to classify and categorise the data.
 
 
 #RESEARCH QUESTIONS
@@ -115,15 +153,15 @@ I will also explore Linear Discriminant Analysis(LDA) and  Multiple Corresponden
 #DATA EXPLORATION AND DESCRIPTION.
 The data includes 35 variables and 382 observations which describe the performances of secondary school students in two distinct subjects: Mathematics and Portuguese. It also contains demographic, social and other information about schooling. Other information related to the original data can be found from [this source](https://archive.ics.uci.edu/ml/datasets/Student+Performance). 
 
-After downloading the data, it was wrangled by combining the two different datasets related to Performances in Mathematics and Portuguese. Thereafter, Weekend and weekdays alcohol consumptions were combined by finding their average. Afterwards, a thresold of 0.5 was selected for high alcohol consumption and a boolean variable("high_use") was created from that. **_The link to my DATA WRANGLING is_**[here.](https://github.com/Oyelowo/IODS-final/blob/master/data_wrangling_alc.R)
+After downloading the data, it was wrangled by combining the two different datasets related to Performances in Mathematics and Portuguese. Thereafter, Weekend and weekdays alcohol consumptions were combined by finding their average. Afterwards, a threshold of 2 was selected for high alcohol consumption and a boolean variable("high_use") was created from that. **_The link to my DATA WRANGLING is_** [here.](https://github.com/Oyelowo/IODS-final/blob/master/data_wrangling_alc.R)
 
 The wrangled data can also be found [here.](https://github.com/Oyelowo/IODS-final/blob/master/data/alcohol_student.csv)
 
 
 
-The response/target variables of interest are: **_grades(G3), high alcohol consumption(high_use), alcohol consumption(alc_use) and absences_**. G3 is the final year grade of the students. Other information related to the description of the variables can be found from the source given above.
+The response/target variables of interest are: **_grades(G3), high alcohol consumption(high_use), alcohol consumption(alc_use) and absences_**. G3 is the final grades of the year of the students. Other information related to the description of the variables can be found from the source given above.
 
-
+All in all, there are 35 variables and 382 observations in the dataset.
 
 
 ```{r, message=FALSE, warning=FALSE}
@@ -141,7 +179,7 @@ gather(alco_data) %>% ggplot(aes(value)) + facet_wrap("key", scales = "free") + 
 
 ```
 
-  The above shows the distribution of the chosen predictors and also scale of alcohol consumption. The ages of the students are mainly within 15-19 with few students aged 20 and 22. Generally, there are relatively few chronic alcohol consumers amongst the students. The students seem to have quite enough free time. The respondents include 198 female students and 184 male students.
+  The above show the distributions of the chosen predictors and also scale of alcohol consumption. The ages of the students are mainly within 15-19 with few students aged 20 and 22. Generally, there are relatively few chronic alcohol consumers amongst the students. The students seem to have quite enough free time. The respondents include 198 female students and 184 male students.
   
 ```{r, message=FALSE, warning=FALSE}
 hyp<- alco_data[,c("age", "sex",  "absences","freetime","alc_use")]
@@ -153,8 +191,8 @@ plot_hyp   #draw the plot
   Here, we can see that the female students seem to be generally quite older and there are both male and female students that are much older than the general sample of the students. The absences are not so high but some chronic absentees amongst the students(both male and female). Most of the students are quite free but a few of the students are very busy. Largely, all the predictors show no correlation, hence, the issue of multicolinearity is not a problem here. However, these predictors still show very weak correlation with alcohol consumption. Nevertheless, it should be recalled that correlation is not causation. Hence, I will dig further to understand the effects of these predictors on alcohol consumption amongst students and see if they are significant.
   
   
-  Crosstabs
-The below are crosstabs that compare the predictors with alcohol consumption
+  **Crosstabs**
+The below crosstabs compare the predictors with alcohol consumption
 
 ```{r, message=FALSE, warning=FALSE}
 #using the binomial response(high_use)
@@ -193,7 +231,7 @@ hu_sex <- ggplot(data = alco_data, aes(x=sex, col=sex))
 hu_sex + geom_bar() + facet_wrap("high_use")  
 ```
 
-Here, we can see that there are more female who do are not high consumers of alcohol compared to men. Men consume more alchols than their female counterparts
+Here, we can see that there are more female students who are not high consumers of alcohol compared to men. Men consume more alchols than their female counterparts
 
 
 
@@ -226,12 +264,13 @@ hu_rom <- ggplot(data = alco_data, aes(x=romantic, col=sex))
 hu_rom + geom_bar() + facet_wrap("high_use")
 ```
 
-For students in romantic relationships, they generally have lower number of them that are high consumers of alcohol. This is same with those in no romatic relationship.
+For students in romantic relationships, they generally have lower number of them that are high consumers of alcohol. This is same with those in no romantic relationship.
 
 
 
 **BOXPLOTS**
-**Below are boxplots to give clearer pictures, as explained earlier. ##Relationship of alcohol consumption with absences**
+
+**Below are boxplots to give clearer pictures, as explained earlier. Relationship of alcohol consumption with absences**
 
 ```{r, message=FALSE, warning=FALSE}
 # initialise a plot of high_use and absences
@@ -241,7 +280,7 @@ h_ab<- ggplot(alco_data, aes(x=high_use, y=absences,col=sex))
 h_ab + geom_boxplot() + ggtitle("Student absences vs alcohol consumption")
 ```
 
-There are a few chronic absentees amongst male and female students, but generally, most of the students have low absences.
+There are a few chronic absentees amongst male and female students, but generally, most of the students have low absences. It seems some students(both high and non-high alcohol consumers) are frequently absent. However, high consumers appear to be more absent, overall.
 
 
 **Relationship of alcohol consumption with age**
@@ -271,9 +310,9 @@ There are a few female students with quite high alcohol consumption but the alco
 #METHODOLOGY.
 To understand factors that could affect students' performances, alcohol consumption pattern and absences, I will be utilising three different approaches. The first is the Multiple Correspondence Analysis(MCA) which is used for categorical variables. I will firstly explore the already categorised variables and further categorise more continuous variables for MCA. This is useful to understand the associations amongst the variables.
 
-The second approach involves the use of various regression models: Generalised Linear Model(GLM), Generalised Additive Model(GAM) and General Boosted Model(GBM). These will be used to further understand the causations. Furthermore, two GBM packages -"gbm" and "dismo"- will be used to compare their performances. In selection of the predictors for GLM, stepwise regression, t-test from model summary and anova(Chi square) test will be performed to eliminate redundancies. In GAM, variables will be selected in similar manner, and a smoothing spline function be used with appropriate degree of freedom.
+The second approach involves the use of various regression models: Generalised Linear Model(GLM), Generalised Additive Model(GAM) and General Boosted Model(GBM). These will be used to further understand the causations. Furthermore, two GBM packages  in **R**-"gbm" and "dismo"- will be used to compare their performances. In selection of the predictors for GLM, stepwise regression, t-test from model summary and anova(Chi square) test will be performed to eliminate redundancies. In GAM, variables will be selected in similar manner, and a smoothing spline function be used with appropriate degree of freedom.
 
-Also, the models of the grades(G3) and absences, will be evaluated, by using correlation, Mean Absolute error and Root Mean Square Error(RMSE). However, the modells of binomial response variable - high alcohol consumption(high_use) -  will be evaluated by adopting the Receiver operating characteristic(ROC) Area Under Curve(AUC). Confusion/Classification matrix will also be used to evaluate the precision, accuracy, sensitivity and specificity. The odds ratio will also be looked into.
+Also, the models of the grades(G3) and absences, will be evaluated, by using correlation, Mean Absolute error and Root Mean Square Error(RMSE). However, the models of binomial response variable - high alcohol consumption(high_use) -  will be evaluated by adopting the Receiver operating characteristic(ROC) Area Under Curve(AUC). Confusion/Classification matrix will also be used to evaluate the precision, accuracy, sensitivity and specificity. The odds ratio will also be looked into.
 
 
 In the course of the evaluation of the regression models, the data will be divided into 70% calibration or training data and 30% evaluation or testing data. The data is also sampled by replacement and boostrapped ten times.
@@ -342,14 +381,15 @@ ggplot(data = mca_obs_df, aes(x = Dim.1, y = Dim.2)) +
 ```
 
   Here, we can see that female students generally attend school
-because of her reputation and get more school support.
+because of the reputation and get more school support.
 They also have family support and are able to attend paid extra
 classes. Most of their father's job are in the health sector.
-High alcohol consumption is more rampant amongst female students
-compared to their male counterparts with high alcohol use.
-male students also attend the school based on course preference
+High alcohol consumption is more rampant amongst male students
+compared to their female counterparts.
+
+Male students also seem attend the school based on course preference
 and other reasons. By and large, they do not attend paid extra classes compared to the female students and also do not get family and school support like the frmale students.
-Lastly, they mosly have no intention of pursuing higher education. This is explored further by categorising more continuous variables such as grades, absences, to allow for comparison with other variables.
+Lastly, unlike the female students, they mosly have no intention of pursuing higher education. This is explored further by categorising more continuous variables such as grades, absences, to allow for comparison with other variables.
 
 
 
@@ -448,28 +488,30 @@ ggplot(data = mca_obs_df2, aes(x = Dim.1, y = Dim.2)) +
 
 
 Here, we can see the categorisation and association
-In the NW quadrant, it shows that those that pay for for extra
+In the NorthWest quadrant, it shows that those that pay for for extra
 classes in portugese and math, have family support and are mostly
 female students. They also get extra education support and have
-ambition for higher education.
+ambition for higher education. In addition, they mostly had nursery education too.
 
 
-  In the NE quadrant, high alcohol use seem to be associated with
+  In the NorthEast quadrant, high alcohol use seem to be associated with
 guardian other than mother or father. Those with high
 alcohol use also seem to not have ambition for higher education.
 They also perform poorly in studies(low grade). and mostly choose
 school because it is closer to home amongst other reasons, other
 than reputation and course preference. They also do not seem to
 participate in extracurricular activities and are mostly
-in romantic relationship. They also high absences.
+in romantic relationship. They also frequently absent.
 
-  In the SW quadrant, it can be seen that those that have low absence
+  In the SouthWest quadrant, it can be seen that those that have low absence
 perform very well in studies do not take excessive alcohol. They
 are also engaged in extracurricular activities and have their mother
-as their guardian. They also motivated to attend the school
+as their guardian. They are also motivated to attend the school
 because of shool's reputation.
 
-  In the SE quadrant, Male students seem to be more moderately absent and do not attend paid extra classes in portuguese and math. They mostly attend the school because of the course preference. They generally also have no internet access. They also mostly do not get school's support. It also looks like their father are their guardian.
+  In the SouthEast quadrant, Male students seem to be quite frequently absent and do not attend paid extra classes in portuguese and math. They mostly attend the school because of the course preference. They generally also have no internet access. They also mostly do not get school's support. It also looks like their father are their guardian.
+  
+  What I deduce here is that female gets more support because they are are with their mothers or parents generally whom are more educated and work in the health sector while male students seem to have the opposite situation. This support and ambition for higher education also motivate them to perform better in studies and be more frequently present.
 
   This will be further explored with family of regression models
 **(GLM, GAM, GBM)**
@@ -581,7 +623,7 @@ plot(grade_glm, which = c(1,2,5))
 ```
 
 
-from this, the constant variance of the error seem to be in line.
+From this, the constant variance of the error seem to be in line.
 The distribution also appears to be normal from the Normal Q-Q plot although, slight divergence from the line at the lower level.
 Also, no observation seem to have a clear leverage over others
 aside a point lying quite farther from others. Nevertheless,
@@ -625,7 +667,7 @@ This part is for the model validation. The data was divided into
 70% training/calibration data and 30% testing/evaluation data. 
 It was also boostrapped 10 times. The results of the models and
 the response curves were thereafter presented.
-dividing into 70:30
+dividing into 70:30.
 ```{r, message=FALSE, warning=FALSE, include=FALSE}
 #First copy, the original data into new dataframe, to avoid confusion
 data_reg<-alco_data
@@ -796,7 +838,7 @@ all_cor_grade
 They all are low and not so much different.
 
 
-**Below, we can see the errors of the various models.
+**Below, we can see the errors of the various models.**
 
 ```{r, message=FALSE, warning=FALSE}
 #error of all the models
@@ -841,6 +883,8 @@ plot(grade_gam, pages=1)
 ```
 
 Here, from the smooth curve from GAM, we can see that mother's education level has a positive effect on student's performance. However, the confidence interval especially at the lower level. is quite large, which shows that there is a wide range of uncertainty. Perharps, more observations needed.
+Expectedly, study time also seem to have a positive effect on students' performances but the uncertainty is quite high.
+
 This will be explored further in the response curves from GBM below.
 
 
@@ -858,11 +902,11 @@ par(mfrow=c(1,1))
 
 ```
 
-As we can see here, the higher the level of education of the mother, their kids seem to perform better. Also, studentsÃ¤ with intention to pursue higher education seem to perform better.
-Alcohol use and absences reduces performance and can result in dramatic reduction if it becomes chronic.
+As we can see here, the higher the level of education of the mother, the more their kids seem to perform better. Also, students with intention to pursue higher education seem to perform better.
+Alcohol use and absences reduces performance and can result in dramatic reduction if it becomes chronic. This is moreso, with being absent from school.
 
 
-##**PREDICTED VS OBSERVED GRAGE(G3) FROM GBM.
+##PREDICTED VS OBSERVED GRAGE(G3) FROM GBM.
 ```{r, message=FALSE, warning=FALSE}
 plot(predict.gbm(grade_gbm1, data_reg, best.iter1), data_reg$G3, 
      main="Observed vs Predicted grade")
@@ -1130,11 +1174,8 @@ plot(abse_gam, pages=1)
 
 
 
-Teenage students are more likely to be absent although, there seems
-not to be enough data for older students above 20, as the confidence interval'
-seem high. Also. the likelihood of absences reduces with increase in the level
-of education of the mother. Studytime also reduces this. While Alcohol increases
-this. It is quite unsure how grade affects.
+There appears not to be enough data for older students above 20, as the confidence interval' seem high. Hence, difficult to assert the trend in this case. Also. the likelihood of absences reduces with increase in the level of education of the mother. Studytime also reduces this while Alcohol increases
+the frequency of absence. It is quite unsure how grade affects but very frequent absence seem to have a dwindling effect on students' final grade.
 
 
 Furthermore, I will be expploring this further with GBM reponse curves.
@@ -1157,12 +1198,9 @@ par(mfrow=c(1,1))
 ```
 
 
-Alcohol use, age mother's education seem to increase the tendency to be absent
-while freetime does the opposite. This is quite surprising as, I had expected the
+Alcohol use, age mother's education seem to increase the tendency to be absent while freetime does the opposite. This is quite surprising as, I had expected the
 exact opposite.
-Also, students' with parents apart have more tendency to be absent that
-those with their parents together. Likewise, students in romantic relationship
-are more likely to be absent than those without.
+Also, students' with parents apart have more tendency to be more absent than those with their parents together. Likewise, students in romantic relationship are more likely to be more absent than those without.
 
 
 
@@ -1179,7 +1217,7 @@ legend("topleft", paste("r^2=", round(r2abse,3)))
 
 ```
 
-We can see from the scatterplots that the selected variables, account for only 23%(the coefficient of determination) factors affecting the students' absences.
+We can see from the scatterplots that the selected variables, account for only 24%(the coefficient of determination) factors affecting the students' absences.
 
 
 
@@ -1326,17 +1364,14 @@ par(mfrow=c(1,1))
 
 
 Here, I utilised Area Under Curve for evaluating my model. This
-is because it prevents subjectiveness in selecting thresholds which can
-significantly affect the predictive performance and commission and omission error.
-Although, measures, such as prevalence have been recommended for dealing
-with selection of threshold to conver into binary(e.g, True or False).
-AUC readily takes care of this by considering all the possible thresholds
-and evaluates the performance, accordingly. a value of >0.9 is an excellent model
-while AUC values with range 0.7-0.8, 0.5-0.7, 0.5 are fairly good, poor and
-very poor respectively.
-Here, my AUC values for all the models thorugh my boosting and resampling
-are about 0.7 for the three different models(GLm, GAM, GBM) which I applied.
+is because it prevents subjectiveness in selecting thresholds which can significantly affect the predictive performance and commission and omission error. It does this by considering all possible threshold and utilising that which minimises the error.
 
+
+Although, measures, such as prevalence have been recommended for dealing with selection of threshold to conver into binary(e.g, True or False). AUC readily takes care of this by considering all the possible thresholds and evaluates the performance, accordingly. a value of >0.9 is an excellent model while AUC values with range 0.7-0.8, 0.5-0.7, 0.5 are fairly good, poor and very poor respectively.
+
+
+Here, my AUC values for all the models thorugh my boostrapping(repititive sampling) and resampling
+are about average of 0.7 for the three different models(GLM, GAM, GBM) which I applied. Without boostrapping, There all are about 0.81.
 
 ##MODEL FOR HIGH ALCOHOL USE
 ##RESPONSE CURVES AND MODEL INTERPRETATIONS.
@@ -1354,12 +1389,9 @@ summary(halc_gam)
 plot(halc_gam, pages=1)
 ```
 
-From the above, we can see the response of high alcohol use to the various
-predictors and also the confidence interval. There appears to be lesser tendency
-of high alcohol use when study time increases. This is expected, as the student
-has lesser time for social activities and parties.
-on the other hand, expectedly, going out increases the tendency of high alcohol
-use. In similar vein, absence from school increases the tendency too.
+From the above, we can see the response of high alcohol use to the various predictors and also the confidence interval. There appears to be lesser tendency of high alcohol use when study time increases. This is expected, as students have lesser time for social activities and parties.
+
+On the other hand, expectedly, going out increases the tendency of high alcohol use. In similar vein, absence from school increases the tendency too.
 but as it can be seen from the plot, the confidence interval seems to reduce
 with increase in number of absences, which might be an indication of
 insufficient data from that region.
@@ -1403,10 +1435,9 @@ plot.gbm(halc_gbm1, "studytime", best.iter1)
 
 ```
 
-As it can also be seen from the GM reponse curves, absences and going out,
-increases the tendency of high alcohol use. Going out steeply affects when
-it is more than average. Absences of slighty higher than 10 times can
-even increase the tendency. Family relationship however, reduces the tendency.
+As it can also be seen from the GBM reponse curves, absences and going out,
+increases the tendency of high alcohol use. Going out steeply affects when it is more than average. Absences of slighty higher than 10 times can
+even increase the tendency of high alcohol consumption. Family relationship however, reduces the tendency.
 and overall, male students seem to have relatively more high alcohol use than
 their female counterpart. Also, as shown earlier, more study time appears
 to reduce the tendency of high alcohol use.
@@ -1449,10 +1480,10 @@ models used earlier.
 ##CONFUSION MATRIX
 ERROR IN PREDICTD HIGH ALCOHOL USE.
 Although, AUC is preferred, as it considers all possible threshold
-and prevent subjectiveness, I will be exploring a confusion matrix too
+and prevents subjectiveness, I will be exploring a confusion matrix too
 and 0.5 will be made the threshold for TRUE or FALSE for high
 alcohol use. More information on creating functions to calculate
-these metrics in a more automated way can be found [here](http://rpubs.com/prcuny/161764)
+these metrics in a more automated way can be found [here.](http://rpubs.com/prcuny/161764)
 
 ```{r, message=FALSE, warning=FALSE}
 #fit the model
@@ -1514,9 +1545,8 @@ Accuracy of the prediction is about 0.79 which is fairly good.
 Miclassification/error rate is about 0.21
 By using threshold of 0.5, we can see that 252 FALSE high alcohol
 use were Truly/rightly predicted and 16 falsely predicted.
-There are also 49 high alcohol use that were Truly predicted
-while 65, wrongly predicted. The prediction seems to be better
-when predicting no high alcohol use(i.e Specifity) than when
+There are also 49 high alcohol use that were rightly predicted to be TRUE
+while 65 TRUE, wrongly predicted as FALSE. The prediction seems to be better when predicting no high alcohol use(i.e Specifity) than when
 predicting the true value(sensitivity. This can also be seen in the plot below.
 
 
@@ -1707,7 +1737,7 @@ qplot(x = 1:k_max, y = twcss, geom = c('point', 'line'))
 ```
 
 
-**Further, use the NbClust to confirm. There are quite many others too. Two others are in the previous code chunk where the packages "cluster" and "factoextra" can be used. See more [here](http://www.sthda.com/english/wiki/print.php?id=239#required-packages) for other cluster methods of checking the optimal number of classes.
+Further, use the NbClust to confirm. There are quite many others too. Two others are in the previous code chunk where the packages "cluster" and "factoextra" can be used. See more [here](http://www.sthda.com/english/wiki/print.php?id=239#required-packages) for other cluster methods of checking the optimal number of classes.
 
 
 ```{r, message=FALSE, warning=FALSE}
@@ -1726,7 +1756,7 @@ km <-kmeans(dist_sca, centers = 3)
 #perform LDA on the clustered data
 lda.fit_clus<- lda(km$cluster~., data=data_num_sca)
 
-
+par(mfrow=c(1,1))
 plot(lda.fit_clus, dimen = 2, col = km$cluster, pch= km$cluster)
 lda.arrows(lda.fit_clus, myscale = 2)
 ```
@@ -1787,7 +1817,7 @@ lda.arrows(lda.fit_clus, myscale = 2)
 
 Here, we can see that going out, free time and absences tend
 tend to cause high alcohol use.
-On the other hand, study tume, family relationship tend to reduce it.
+On the other hand, study time, family relationship tend to reduce it.
 
 
 **3D VISUALISATION OF THE CLUSTERS**
