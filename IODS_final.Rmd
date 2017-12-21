@@ -61,9 +61,9 @@ or 'GT3' - greater than 3)
 
 - 6 Pstatus - parent's cohabitation status (binary: 'T' - living together or 'A' - apart) 
 
-- 7 Medu - mother's education (numeric: 0 - none, 1 - primary education (4th grade), 2 �???" 5th to 9th grade, 3 �???" secondary education or 4 �???" higher education) 
+- 7 Medu - mother's education (numeric: 0 - none, 1 - primary education (4th grade), 2 â€“ 5th to 9th grade, 3 â€“ secondary education or 4 â€“ higher education) 
 
-- 8 Fedu - father's education (numeric: 0 - none, 1 - primary education (4th grade), 2 �???" 5th to 9th grade, 3 �???" secondary education or 4 �???" higher education) 
+- 8 Fedu - father's education (numeric: 0 - none, 1 - primary education (4th grade), 2 â€“ 5th to 9th grade, 3 â€“ secondary education or 4 â€“ higher education) 
 
 - 9 Mjob - mother's job (nominal: 'teacher', 'health' care related, civil 'services' (e.g. administrative or police), 'at_home' or 'other') 
 
@@ -1493,7 +1493,7 @@ probs<- predict(halc_glm_mod, type = "response")
 #Copy the data again
 alc<-data_reg
 
-#add the predicted probabilities to �alca
+#add the predicted probabilities to âalca
 alc$prob_high_use <- probs
 #alc <- mutate(alc, probability = probabilities)
 
