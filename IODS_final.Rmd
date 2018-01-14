@@ -164,7 +164,7 @@ The response/target variables of interest are: **_grades(G3), high alcohol consu
 All in all, there are 35 variables and 382 observations in the dataset.
 
 
-```{r, message=FALSE, warning=FALSE}
+```{r, message=FALSE, warning=FALSE, }
 categ = apply(alco_data, 2, function(x) nlevels(as.factor(x)))
 #categ
 dim(alco_data)
@@ -322,9 +322,10 @@ Lastly, Linear Discriminant Analysis will be performed on categorised grades(G3)
 
 
 #RESULTS.
-  To avoid, confusion, I will copy the data into a new data frame for MCA. Firstly, I will be extracting the categorical variables, as factors.  
+   
 
 ##MULTIPLE CORRESPONDENCE ANALYSIS(MCA)
+To avoid, confusion, I will copy the data into a new data frame for MCA. Firstly, I will be extracting the categorical variables, as factors. 
 ```{r, message=FALSE, warning=FALSE}
 #To avoid, confusion, I will copy the data into a new data frame for MCA
 data_mca <- alco_data
@@ -342,7 +343,7 @@ data_mca_fac1 <- cbind.data.frame(data_mca_fac1, high_use)
 ```{r, message=FALSE, warning=FALSE}
 #par(mfrow=c(1,2))
 #now, perform the MCA on the catergorial/qualitative variables
-mca_alco1 <- MCA(data_mca_fac1, graph = T)
+mca_alco1 <- MCA(data_mca_fac1, graph = F)
 
 #plot it
 plot(mca_alco1, invisible=c("ind"), habillage="quali")
@@ -395,8 +396,8 @@ Lastly, unlike the female students, they mosly have no intention of pursuing hig
 
 **CATEGORISE MORE VARIABLES**
  
- Next, I will be categorising **_grade(G3), absences, Mother's education(Medu), father's education_**
-```{r, message=FALSE, warning=FALSE}
+ Next, I will be categorising or factorised **_grade(G3), absences, Mother's education(Medu), father's education_**.  Grade(G3) will be divided into four quartiles and categorised as "very low", "low", "high", and "very high". Absences is categorised similarly. Mother and father's education are factorised and classified as "no education", "primary education","5-9th grade", "secondary education", "higher Education"
+```{r, message=FALSE, warning=FALSE, results='hide'}
 #Next, I will be categorising grade(G3), absences, Mother's education(Medu),
 #father's education
 data_mca2<- alco_data
@@ -408,8 +409,7 @@ data_mca2$Fedu<- factor(data_mca2$Medu, labels=c("no", "pr","5-9th", "sec", "hiE
 
 #Now, let's categorise grades according to quartiles
 bins_abs<- quantile(data_mca2$absences)
-data_mca2$absences<-cut(data_mca2$absences, breaks=bins_abs, include.lowest=T,
-                       labels=c("vlow", "low", "high", "vhigh"))
+data_mca2$absences<-cut(data_mca2$absences, breaks=bins_abs, include.lowest=T, labels=c("vlow", "low", "high", "vhigh"))
 
 #same to grade(G3)
 bins_gra<- quantile(data_mca2$G3)
@@ -451,7 +451,7 @@ names(data_mca_fac2_)
 data_mca_fac2<-data_mca_fac2_[,c("sex",names(data_mca_fac2_[,(10:ncol(data_mca_fac2_))]))]
     
 #now, perform the MCA on the catergorial/qualitative variables
-mca_alco2 <- MCA(data_mca_fac2, graph = T)
+mca_alco2 <- MCA(data_mca_fac2, graph = F)
 
 #plot it
 plot(mca_alco2, invisible=c("ind"), habillage="quali")
@@ -567,7 +567,7 @@ It shows here that it is invalid for grade(G3) but valid for "absences" variable
   For GLM, predictors will be selected, by firstly using stepwise regression to eliminate the redundant variables. Afterwards, I will be employing the significance test from the model summary, anova test(Chi Square), and AIC values. I also checked if any of the predictor is curvillinear(i.e has higher order polynomial).
 
 
-```{r, message=FALSE, warning=FALSE, include=FALSE}
+```{r, message=FALSE, warning=FALSE, results='hide', fig.show='hide'}
 #As done earlier, the data will be copied into a new dataframe for 
 #all the regression analysis, to avoid confusion and alteration of 
 #the original data
@@ -668,7 +668,7 @@ This part is for the model validation. The data was divided into
 It was also boostrapped 10 times. The results of the models and
 the response curves were thereafter presented.
 dividing into 70:30.
-```{r, message=FALSE, warning=FALSE, include=FALSE}
+```{r, message=FALSE, warning=FALSE, results='hide', fig.show='hide'}
 #First copy, the original data into new dataframe, to avoid confusion
 data_reg<-alco_data
 
@@ -853,7 +853,7 @@ There appears to be not much difference in the errors of all the models used.
 I chose GBM because it is able to handle multicollinearity and complex interactions, it can also show the response curves and relative importance of predictors.
 GAM is also able to show response curves and their confidence intervals.
 
-```{r, message=FALSE, include=FALSE, warning=FALSE}
+```{r, message=FALSE,results='hide', fig.show='hide',  warning=FALSE}
 #Using all the models to see the prediction
 grade_gbm1<-gbm(formula = G3~ sex + age+address+Medu+Fedu+
           Pstatus+traveltime+studytime+famsup+activities+higher+           internet+famrel+romantic+freetime+goout+ alc_use+                   absences, data=data_reg,
@@ -931,7 +931,7 @@ We can see from the scatterplots that the selected variables, account for only
 
 For GLM, the selection of predictors was done as earlier by using stepwise regression, anova(Chis sq) test and significance test from the model summary.
 
-```{r, message=FALSE, warning=FALSE, include=FALSE}
+```{r, message=FALSE, warning=FALSE, results='hide', fig.show='hide'}
 abse_glm<-glm(absences ~sex + age+address+Medu+Fedu+
                 Pstatus+                                             traveltime+studytime+famsup+activities+higher+
                 internet+famrel+romantic+freetime+goout+                       high_use+G3
@@ -963,7 +963,7 @@ The factors that might be causing absence of students are above.
 
 
 ##TRAINING AND TESTING OF MODELS FOR "ABSENCES"
-```{r, message=FALSE, warning=FALSE, include=FALSE}
+```{r, message=FALSE, warning=FALSE, results='hide', fig.show='hide'}
 
 #########################################################################
 
@@ -1141,7 +1141,7 @@ all_error_abse
 
 
 ##FITTING THE REGRESSION FOR "ABSENCES" WITH GBM
-```{r, message=FALSE, warning=FALSE, include=FALSE}
+```{r, message=FALSE, warning=FALSE, results='hide', fig.show='hide'}
 #Using all the models to see the prediction
 abse_gbm1<-gbm(formula = absences~ sex + age+address+Medu+Fedu+
                  Pstatus+traveltime+studytime+famsup+activities+                 higher+ internet+famrel+romantic+freetime+goout+                 alc_use, data=data_reg,
@@ -1228,7 +1228,7 @@ We can see from the scatterplots that the selected variables, account for only 2
 Similar step was repeated here. However, in evaluating the models, I utilised **Area Under Curve(AUC), odds ratio and confusion/classification matrix**,  instead.
 
 
-```{r, message=FALSE, warning=FALSE, include= FALSE}
+```{r, message=FALSE, warning=FALSE, results='hide', fig.show='hide'}
 #HIGH ALCOHOL
 
 #Initial model for GLM
@@ -1254,7 +1254,7 @@ anova(halc_glm, test = "Chisq")
 
 
 
-```{r, message=FALSE, warning=FALSE, include=FALSE}
+```{r, message=FALSE, warning=FALSE, results='hide', fig.show='hide'}
 
 ############################################################
 #####################################

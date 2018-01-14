@@ -7,6 +7,7 @@ alco_data <- read.table(paste0(fpath, "alcohol_student.csv"), sep=",", header=T)
 alco_data<- alco_data[,-1]
 
 
+
 #My aim is to demonstrate the use of various statistical techniques in getting insight in to
 #the data. Firstly, I will use the basic desctiptive statitstics to understand
 #the distribution, correlation and dependencies(cor, barplot, histogram, biplot etc)
