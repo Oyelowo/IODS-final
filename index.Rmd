@@ -15,8 +15,8 @@ output:
     fig_height: 5
     code_folding: hide
 ---
-This is the introduction to my final assignment for the open data science
-I will be working on the alcohol data set
+This is the introduction to my final assignment for the open data science.
+I will be working on the alcohol data set.
 ```{r child = "IODS_final.Rmd"}
 
 
