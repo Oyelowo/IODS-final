@@ -511,7 +511,7 @@ because of shool's reputation.
 
   In the SouthEast quadrant, Male students seem to be quite frequently absent and do not attend paid extra classes in portuguese and math. They mostly attend the school because of the course preference. They generally also have no internet access. They also mostly do not get school's support. It also looks like their father are their guardian.
   
-  What I deduce here is that female gets more support because they are are with their mothers or parents generally whom are more educated and work in the health sector while male students seem to have the opposite situation. This support and ambition for higher education also motivate them to perform better in studies and be more frequently present.
+  What I deduce here is that female students get more support because they are are with their mothers or parents whom generally are more educated and work in the health sector while male students seem to have the opposite situation. This support and ambition for higher education also motivate the female students to perform better in studies and be more frequently present.
 
   This will be further explored with family of regression models
 **(GLM, GAM, GBM)**
